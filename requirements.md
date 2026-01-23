@@ -8,7 +8,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 1: Project Setup
 
 ### TASK-001: Create monorepo structure
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: none
 - **Description**: Create root `package.json` with workspaces for `server/` and `client/` directories.

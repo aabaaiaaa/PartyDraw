@@ -1,0 +1,25 @@
+{
+  "name": "partydraw",
+  "version": "1.0.0",
+  "description": "A multiplayer party drawing game with real-time Socket.IO communication",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm run dev --workspace=client",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "keywords": [
+    "party-game",
+    "drawing",
+    "multiplayer",
+    "socket.io"
+  ],
+  "author": "",
+  "license": "ISC"
+}
