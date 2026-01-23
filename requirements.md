@@ -72,7 +72,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/utils/nameGenerator.ts` with arrays of verbs (Dancing, Jumping, Sleepy, etc.) and animals (Panda, Fox, Koala, etc.) to generate random player names.
 
 ### TASK-011: Create Player model
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-008
 - **Description**: Create `server/src/models/Player.ts` with id, name, color, socketId, isReady, isConnected, score, and lastHeartbeat properties.
