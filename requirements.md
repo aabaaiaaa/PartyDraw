@@ -78,7 +78,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/models/Player.ts` with id, name, color, socketId, isReady, isConnected, score, and lastHeartbeat properties.
 
 ### TASK-012: Create Room model
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-011
 - **Description**: Create `server/src/models/Room.ts` with id, code, hostSocketId, players map, status, game state, and settings (maxPlayers: 8, rounds: 3, drawingTime: 20s, votingTime: 15s).
