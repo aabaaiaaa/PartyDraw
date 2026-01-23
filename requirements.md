@@ -96,7 +96,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/models/Game.ts` with state machine: lobby → countdown → drawing → voting → results → final. Include currentRound, totalRounds, question, drawings, votes.
 
 ### TASK-015: Implement TimerService
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-014
 - **Description**: Create `server/src/services/TimerService.ts` with server-authoritative timers that broadcast ticks to all clients. Methods: startCountdown(), startDrawingTimer(), startVotingTimer(), clearTimer().
