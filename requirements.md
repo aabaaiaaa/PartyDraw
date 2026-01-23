@@ -54,7 +54,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 2: Server Core
 
 ### TASK-008: Create Express + Socket.IO server
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-002
 - **Description**: Create `server/src/index.ts` and `server/src/app.ts` with Express server, Socket.IO integration, and CORS configuration.

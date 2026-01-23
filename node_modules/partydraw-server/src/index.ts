@@ -1,50 +1,43 @@
-import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import cors from 'cors';
+import { createApp, CORS_OPTIONS } from './app';
 
-const PORT = 3001;
-const CLIENT_URL = 'http://localhost:5175';
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
-const app = express();
+// Create Express app
+const app = createApp();
 
-// Configure CORS for Express
-app.use(cors({
-  origin: [CLIENT_URL, 'http://localhost:5174'], // Allow client and TestBoardBed
-  methods: ['GET', 'POST'],
-  credentials: true,
-}));
-
-app.use(express.json());
-
-// Health check endpoint
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
+// Create HTTP server
 const httpServer = createServer(app);
 
-// Configure Socket.IO with CORS
+// Create Socket.IO server with CORS configuration
 const io = new Server(httpServer, {
-  cors: {
-    origin: [CLIENT_URL, 'http://localhost:5174'], // Allow client and TestBoardBed
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
+  cors: CORS_OPTIONS,
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
-// Socket.IO connection handler (placeholder for future implementation)
+// Socket.IO connection handler
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+  // Acknowledge connection
+  socket.emit('connected', { socketId: socket.id });
+
+  socket.on('disconnect', (reason) => {
+    console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
+  });
+
+  socket.on('error', (error) => {
+    console.error(`Socket error for ${socket.id}:`, error);
   });
 });
 
+// Start server
 httpServer.listen(PORT, () => {
   console.log(`PartyDraw server running on http://localhost:${PORT}`);
-  console.log(`CORS enabled for: ${CLIENT_URL}, http://localhost:5174`);
+  console.log(`Socket.IO enabled with CORS for: ${CORS_OPTIONS.origin.join(', ')}`);
 });
 
-export { app, io };
+// Export for testing and external access
+export { app, io, httpServer };
