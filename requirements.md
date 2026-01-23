@@ -20,7 +20,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Set up Node.js + Express + Socket.IO + TypeScript in `server/` directory. Create `package.json` and `tsconfig.json`. Install dependencies: express, socket.io, uuid, cors, typescript, ts-node-dev.
 
 ### TASK-003: Initialize client project
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-001
 - **Description**: Set up Vite + React + TypeScript in `client/` directory using `npm create vite@latest`. Install dependencies: socket.io-client, react, react-dom, typescript.
