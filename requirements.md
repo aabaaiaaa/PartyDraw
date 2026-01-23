@@ -90,7 +90,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/services/RoomService.ts` with methods: createRoom(), joinRoom(), leaveRoom(), getRoom(), removePlayer(), closeRoom().
 
 ### TASK-014: Create Game state machine
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-012
 - **Description**: Create `server/src/models/Game.ts` with state machine: lobby → countdown → drawing → voting → results → final. Include currentRound, totalRounds, question, drawings, votes.
