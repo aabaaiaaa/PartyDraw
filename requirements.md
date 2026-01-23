@@ -84,7 +84,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/models/Room.ts` with id, code, hostSocketId, players map, status, game state, and settings (maxPlayers: 8, rounds: 3, drawingTime: 20s, votingTime: 15s).
 
 ### TASK-013: Implement RoomService
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-012
 - **Description**: Create `server/src/services/RoomService.ts` with methods: createRoom(), joinRoom(), leaveRoom(), getRoom(), removePlayer(), closeRoom().

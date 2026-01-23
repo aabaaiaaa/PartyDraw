@@ -1,0 +1,310 @@
+/**
+ * RoomService
+ * Manages room lifecycle and player interactions for PartyDraw game rooms
+ */
+
+import { v4 as uuidv4 } from 'uuid';
+import {
+  Room,
+  createRoom as createRoomModel,
+  addPlayerToRoom,
+  removePlayerFromRoom,
+  isRoomFull,
+  RoomSettings,
+} from '../models/Room';
+import { Player, createPlayer, getColorForPlayerIndex } from '../models/Player';
+import { generateUniqueRoomCode } from '../utils/roomCodeGenerator';
+import { generateUniquePlayerName } from '../utils/nameGenerator';
+
+/**
+ * Error types for room operations
+ */
+export type RoomError =
+  | 'ROOM_NOT_FOUND'
+  | 'ROOM_FULL'
+  | 'PLAYER_NOT_FOUND'
+  | 'INVALID_ROOM_CODE'
+  | 'GAME_IN_PROGRESS';
+
+/**
+ * Result type for room operations that may fail
+ */
+export type RoomResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: RoomError; message: string };
+
+/**
+ * RoomService class
+ * Singleton service that manages all game rooms
+ */
+export class RoomService {
+  /** Map of room IDs to Room objects */
+  private rooms: Map<string, Room> = new Map();
+
+  /** Map of room codes to room IDs for quick lookup */
+  private roomCodeToId: Map<string, string> = new Map();
+
+  /** Map of socket IDs to player info (roomId, playerId) for quick lookup */
+  private socketToPlayer: Map<string, { roomId: string; playerId: string }> = new Map();
+
+  /**
+   * Creates a new room with a unique code
+   * @param hostSocketId - Socket ID of the host creating the room
+   * @param settings - Optional custom room settings
+   * @returns Result containing the created room or an error
+   */
+  createRoom(
+    hostSocketId: string,
+    settings?: Partial<RoomSettings>
+  ): RoomResult<Room> {
+    const existingCodes = new Set(this.roomCodeToId.keys());
+    const code = generateUniqueRoomCode(existingCodes);
+    const id = uuidv4();
+
+    const room = createRoomModel(id, code, hostSocketId, settings);
+
+    this.rooms.set(id, room);
+    this.roomCodeToId.set(code, id);
+
+    return { success: true, data: room };
+  }
+
+  /**
+   * Joins a player to a room by room code
+   * @param roomCode - The 6-character room code
+   * @param socketId - Socket ID of the joining player
+   * @param playerName - Optional custom player name (will generate if not provided)
+   * @returns Result containing the updated room and new player, or an error
+   */
+  joinRoom(
+    roomCode: string,
+    socketId: string,
+    playerName?: string
+  ): RoomResult<{ room: Room; player: Player }> {
+    const roomId = this.roomCodeToId.get(roomCode.toUpperCase());
+
+    if (!roomId) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: `Room with code "${roomCode}" not found`,
+      };
+    }
+
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: `Room with code "${roomCode}" not found`,
+      };
+    }
+
+    if (isRoomFull(room)) {
+      return {
+        success: false,
+        error: 'ROOM_FULL',
+        message: `Room "${roomCode}" is full (${room.settings.maxPlayers} players max)`,
+      };
+    }
+
+    if (room.status !== 'lobby') {
+      return {
+        success: false,
+        error: 'GAME_IN_PROGRESS',
+        message: 'Cannot join room while game is in progress',
+      };
+    }
+
+    // Generate unique player name if not provided
+    const existingNames = new Set(
+      Array.from(room.players.values()).map((p) => p.name)
+    );
+    const name = playerName || generateUniquePlayerName(existingNames);
+
+    // Get color based on player index
+    const color = getColorForPlayerIndex(room.players.size);
+
+    // Create the player
+    const playerId = uuidv4();
+    const player = createPlayer(playerId, name, socketId, color);
+
+    // Add player to room
+    const updatedRoom = addPlayerToRoom(room, player);
+    this.rooms.set(roomId, updatedRoom);
+
+    // Track socket to player mapping
+    this.socketToPlayer.set(socketId, { roomId, playerId });
+
+    return { success: true, data: { room: updatedRoom, player } };
+  }
+
+  /**
+   * Removes a player from a room when they leave
+   * @param socketId - Socket ID of the leaving player
+   * @returns Result containing the updated room (or null if room was closed), or an error
+   */
+  leaveRoom(socketId: string): RoomResult<{ room: Room | null; playerId: string }> {
+    const playerInfo = this.socketToPlayer.get(socketId);
+
+    if (!playerInfo) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found for this socket',
+      };
+    }
+
+    const { roomId, playerId } = playerInfo;
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      // Clean up the socket mapping even if room is gone
+      this.socketToPlayer.delete(socketId);
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room no longer exists',
+      };
+    }
+
+    // Check if leaving player is the host
+    if (room.hostSocketId === socketId) {
+      // Host left - close the room
+      this.closeRoom(roomId);
+      this.socketToPlayer.delete(socketId);
+      return { success: true, data: { room: null, playerId } };
+    }
+
+    // Remove player from room
+    const updatedRoom = removePlayerFromRoom(room, playerId);
+    this.rooms.set(roomId, updatedRoom);
+    this.socketToPlayer.delete(socketId);
+
+    return { success: true, data: { room: updatedRoom, playerId } };
+  }
+
+  /**
+   * Gets a room by its ID
+   * @param roomId - The room's unique ID
+   * @returns The room if found, undefined otherwise
+   */
+  getRoom(roomId: string): Room | undefined {
+    return this.rooms.get(roomId);
+  }
+
+  /**
+   * Gets a room by its code
+   * @param roomCode - The 6-character room code
+   * @returns The room if found, undefined otherwise
+   */
+  getRoomByCode(roomCode: string): Room | undefined {
+    const roomId = this.roomCodeToId.get(roomCode.toUpperCase());
+    if (!roomId) return undefined;
+    return this.rooms.get(roomId);
+  }
+
+  /**
+   * Gets the room and player info for a socket
+   * @param socketId - The socket ID to look up
+   * @returns Room and player info if found
+   */
+  getRoomBySocket(socketId: string): { room: Room; playerId: string } | undefined {
+    const playerInfo = this.socketToPlayer.get(socketId);
+    if (!playerInfo) return undefined;
+
+    const room = this.rooms.get(playerInfo.roomId);
+    if (!room) return undefined;
+
+    return { room, playerId: playerInfo.playerId };
+  }
+
+  /**
+   * Removes a specific player from a room (admin/host action)
+   * @param roomId - The room's unique ID
+   * @param playerId - The ID of the player to remove
+   * @returns Result containing the updated room or an error
+   */
+  removePlayer(roomId: string, playerId: string): RoomResult<Room> {
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room not found',
+      };
+    }
+
+    const player = room.players.get(playerId);
+
+    if (!player) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found in this room',
+      };
+    }
+
+    // Remove socket mapping
+    this.socketToPlayer.delete(player.socketId);
+
+    // Remove player from room
+    const updatedRoom = removePlayerFromRoom(room, playerId);
+    this.rooms.set(roomId, updatedRoom);
+
+    return { success: true, data: updatedRoom };
+  }
+
+  /**
+   * Closes a room and removes all players
+   * @param roomId - The room's unique ID
+   * @returns True if the room was closed, false if not found
+   */
+  closeRoom(roomId: string): boolean {
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return false;
+    }
+
+    // Remove all socket mappings for players in this room
+    for (const player of room.players.values()) {
+      this.socketToPlayer.delete(player.socketId);
+    }
+
+    // Remove the room
+    this.rooms.delete(roomId);
+    this.roomCodeToId.delete(room.code);
+
+    return true;
+  }
+
+  /**
+   * Updates a room in the service (used after external modifications)
+   * @param room - The updated room object
+   */
+  updateRoom(room: Room): void {
+    this.rooms.set(room.id, room);
+  }
+
+  /**
+   * Gets all active rooms (for debugging/admin)
+   * @returns Array of all active rooms
+   */
+  getAllRooms(): Room[] {
+    return Array.from(this.rooms.values());
+  }
+
+  /**
+   * Gets the count of active rooms
+   * @returns Number of active rooms
+   */
+  getRoomCount(): number {
+    return this.rooms.size;
+  }
+}
+
+// Export a singleton instance
+export const roomService = new RoomService();
