@@ -60,7 +60,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/index.ts` and `server/src/app.ts` with Express server, Socket.IO integration, and CORS configuration.
 
 ### TASK-009: Implement room code generator
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-008
 - **Description**: Create `server/src/utils/roomCodeGenerator.ts` that generates 6-character alphanumeric room codes (e.g., "PARTY7").
