@@ -66,7 +66,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/utils/roomCodeGenerator.ts` that generates 6-character alphanumeric room codes (e.g., "PARTY7").
 
 ### TASK-010: Implement name generator
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-008
 - **Description**: Create `server/src/utils/nameGenerator.ts` with arrays of verbs (Dancing, Jumping, Sleepy, etc.) and animals (Panda, Fox, Koala, etc.) to generate random player names.
