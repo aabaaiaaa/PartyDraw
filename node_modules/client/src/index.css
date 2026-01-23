@@ -1,68 +1,115 @@
-:root {
+@import "tailwindcss";
+
+/* Party Game Color Theme */
+@theme {
+  /* Primary colors - Vibrant purples */
+  --color-purple-50: #faf5ff;
+  --color-purple-100: #f3e8ff;
+  --color-purple-200: #e9d5ff;
+  --color-purple-300: #d8b4fe;
+  --color-purple-400: #c084fc;
+  --color-purple-500: #a855f7;
+  --color-purple-600: #9333ea;
+  --color-purple-700: #7e22ce;
+  --color-purple-800: #6b21a8;
+  --color-purple-900: #581c87;
+  --color-purple-950: #3b0764;
+
+  /* Accent colors - Hot pinks */
+  --color-pink-50: #fdf2f8;
+  --color-pink-100: #fce7f3;
+  --color-pink-200: #fbcfe8;
+  --color-pink-300: #f9a8d4;
+  --color-pink-400: #f472b6;
+  --color-pink-500: #ec4899;
+  --color-pink-600: #db2777;
+  --color-pink-700: #be185d;
+  --color-pink-800: #9d174d;
+  --color-pink-900: #831843;
+  --color-pink-950: #500724;
+
+  /* Highlight colors - Sunny yellows */
+  --color-yellow-50: #fefce8;
+  --color-yellow-100: #fef9c3;
+  --color-yellow-200: #fef08a;
+  --color-yellow-300: #fde047;
+  --color-yellow-400: #facc15;
+  --color-yellow-500: #eab308;
+  --color-yellow-600: #ca8a04;
+  --color-yellow-700: #a16207;
+  --color-yellow-800: #854d0e;
+  --color-yellow-900: #713f12;
+  --color-yellow-950: #422006;
+
+  /* Secondary colors - Cool teals */
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-teal-950: #042f2e;
+
+  /* Party-specific semantic colors */
+  --color-party-primary: var(--color-purple-500);
+  --color-party-primary-dark: var(--color-purple-700);
+  --color-party-accent: var(--color-pink-500);
+  --color-party-accent-dark: var(--color-pink-700);
+  --color-party-highlight: var(--color-yellow-400);
+  --color-party-highlight-dark: var(--color-yellow-600);
+  --color-party-secondary: var(--color-teal-500);
+  --color-party-secondary-dark: var(--color-teal-700);
+
+  /* Game state colors */
+  --color-party-success: #22c55e;
+  --color-party-error: #ef4444;
+  --color-party-warning: var(--color-yellow-500);
+
+  /* Background gradients */
+  --color-party-bg-start: var(--color-purple-900);
+  --color-party-bg-end: var(--color-pink-900);
+
+  /* Player colors (8 vibrant colors for players) */
+  --color-player-1: #a855f7; /* Purple */
+  --color-player-2: #ec4899; /* Pink */
+  --color-player-3: #facc15; /* Yellow */
+  --color-player-4: #14b8a6; /* Teal */
+  --color-player-5: #f97316; /* Orange */
+  --color-player-6: #3b82f6; /* Blue */
+  --color-player-7: #22c55e; /* Green */
+  --color-player-8: #ef4444; /* Red */
+}
+
+/* Base styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background: linear-gradient(135deg, var(--color-party-bg-start), var(--color-party-bg-end));
+  color: white;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+#root {
+  width: 100%;
+  min-height: 100vh;
 }

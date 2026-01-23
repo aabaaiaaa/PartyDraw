@@ -26,7 +26,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Set up Vite + React + TypeScript in `client/` directory using `npm create vite@latest`. Install dependencies: socket.io-client, react, react-dom, typescript.
 
 ### TASK-004: Configure Tailwind CSS
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-003
 - **Description**: Install and configure Tailwind CSS in client. Set up party game color theme with vibrant colors (purples, pinks, yellows, teals).
