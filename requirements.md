@@ -38,7 +38,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Install framer-motion for animations, howler for audio, and qrcode.react for QR code generation.
 
 ### TASK-006: Configure development ports
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-002, TASK-003
 - **Description**: Configure Vite to run client on port 5175, server on port 3001. Set up CORS to allow cross-origin requests between them.
