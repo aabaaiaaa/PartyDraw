@@ -14,7 +14,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create root `package.json` with workspaces for `server/` and `client/` directories.
 
 ### TASK-002: Initialize server project
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-001
 - **Description**: Set up Node.js + Express + Socket.IO + TypeScript in `server/` directory. Create `package.json` and `tsconfig.json`. Install dependencies: express, socket.io, uuid, cors, typescript, ts-node-dev.
