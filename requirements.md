@@ -158,7 +158,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/core/socket.ts` with Socket.IO client that connects to server on port 3001. Include reconnection logic and connection state management.
 
 ### TASK-024: Create useSocket hook
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-023
 - **Description**: Create `client/src/hooks/useSocket.ts` that provides socket instance, connection status, and methods to emit events. Handle disconnection and reconnection.
