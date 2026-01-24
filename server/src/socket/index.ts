@@ -5,8 +5,10 @@
 
 import { Server, Socket } from 'socket.io';
 import { roomService, RoomError } from '../services/RoomService';
-import { Room } from '../models/Room';
+import { Room, updateRoomStatus, resetGameStateForNewRound } from '../models/Room';
 import { Player } from '../models/Player';
+import { transitionToCountdown, transitionToDrawing } from '../models/Game';
+import { timerService, TimerType } from '../services/TimerService';
 
 /**
  * Serializes a Room for transmission over Socket.IO
@@ -397,10 +399,183 @@ export function setupPlayerHandlers(io: Server, socket: Socket): void {
 }
 
 /**
+ * Temporary placeholder questions for game rounds
+ * TODO: Replace with questionBank.ts when TASK-016 is implemented
+ */
+const TEMP_QUESTIONS = [
+  'A cat riding a bicycle',
+  'A happy cloud',
+  'A robot eating pizza',
+  'A superhero penguin',
+  'A dancing tree',
+  'A spaceship made of cheese',
+];
+
+/**
+ * Gets a random question from the temporary question bank
+ */
+function getRandomQuestion(): string {
+  return TEMP_QUESTIONS[Math.floor(Math.random() * TEMP_QUESTIONS.length)];
+}
+
+/**
+ * Sets up game-related socket event handlers
+ * @param io - The Socket.IO server instance
+ * @param socket - The connected socket
+ */
+export function setupGameHandlers(io: Server, socket: Socket): void {
+  /**
+   * Handle game:start event
+   * Only the host can start the game
+   * Transitions: lobby → countdown → drawing
+   */
+  socket.on('game:start', (callback?: (response: object) => void) => {
+    console.log(`[game:start] Socket ${socket.id} attempting to start game`);
+
+    // Get the room for this socket
+    const roomInfo = roomService.getRoomBySocket(socket.id);
+
+    if (!roomInfo) {
+      emitRoomError(socket, 'ROOM_NOT_FOUND', 'You are not in a room');
+      if (callback) {
+        callback({
+          success: false,
+          error: 'ROOM_NOT_FOUND',
+          message: 'You are not in a room',
+        });
+      }
+      return;
+    }
+
+    const { room } = roomInfo;
+
+    // Verify this socket is the host
+    if (room.hostSocketId !== socket.id) {
+      emitRoomError(socket, 'PLAYER_NOT_FOUND', 'Only the host can start the game');
+      if (callback) {
+        callback({
+          success: false,
+          error: 'NOT_HOST',
+          message: 'Only the host can start the game',
+        });
+      }
+      return;
+    }
+
+    // Validate transition to countdown
+    try {
+      transitionToCountdown(room);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to start game';
+      emitRoomError(socket, 'GAME_IN_PROGRESS', message);
+      if (callback) {
+        callback({
+          success: false,
+          error: 'TRANSITION_ERROR',
+          message,
+        });
+      }
+      return;
+    }
+
+    // Update room status to countdown
+    let updatedRoom = updateRoomStatus(room, 'countdown');
+    roomService.updateRoom(updatedRoom);
+
+    console.log(`[game:start] Game starting in room ${room.code}, beginning countdown`);
+
+    // Emit game:countdown event to all players in the room
+    io.to(room.id).emit('game:countdown', {
+      count: 3,
+    });
+
+    // Start the countdown timer (3 seconds)
+    timerService.startCountdown(room.id, 3);
+
+    if (callback) {
+      callback({
+        success: true,
+        status: 'countdown',
+      });
+    }
+  });
+}
+
+/**
+ * Handles timer expiration events from the TimerService
+ * @param io - The Socket.IO server instance
+ * @param roomId - The room ID where the timer expired
+ * @param timerType - The type of timer that expired
+ */
+function handleTimerExpired(io: Server, roomId: string, timerType: TimerType): void {
+  const room = roomService.getRoom(roomId);
+
+  if (!room) {
+    console.error(`[timer:expired] Room ${roomId} not found`);
+    return;
+  }
+
+  console.log(`[timer:expired] Timer ${timerType} expired in room ${room.code}`);
+
+  if (timerType === 'countdown') {
+    // Transition from countdown to drawing
+    try {
+      transitionToDrawing(room);
+    } catch (error) {
+      console.error(`[timer:expired] Failed to transition to drawing:`, error);
+      return;
+    }
+
+    // Prepare for first round
+    const currentRound = room.gameState.currentRound + 1;
+    const question = getRandomQuestion();
+
+    // Reset game state for new round
+    const newGameState = resetGameStateForNewRound(room.gameState, currentRound, question);
+    const now = Date.now();
+    newGameState.phaseStartTime = now;
+    newGameState.phaseEndTime = now + room.settings.drawingTime * 1000;
+
+    // Update room
+    const updatedRoom: Room = {
+      ...room,
+      status: 'drawing',
+      gameState: newGameState,
+    };
+    roomService.updateRoom(updatedRoom);
+
+    console.log(
+      `[timer:expired] Starting round ${currentRound} in room ${room.code} with question: "${question}"`
+    );
+
+    // Emit round:start event to all players
+    io.to(roomId).emit('round:start', {
+      round: currentRound,
+      totalRounds: room.settings.rounds,
+      question,
+      duration: room.settings.drawingTime,
+    });
+
+    // Start the drawing timer
+    timerService.startDrawingTimer(roomId, room.settings.drawingTime);
+  }
+
+  // Note: drawing and voting timer expirations will be handled in TASK-021 and TASK-022
+}
+
+/**
  * Initializes all socket handlers on the Socket.IO server
  * @param io - The Socket.IO server instance
  */
 export function initializeSocketHandlers(io: Server): void {
+  // Initialize the TimerService with the Socket.IO server
+  timerService.initialize(io);
+
+  // Set up timer expiration callback
+  timerService.setOnExpiredCallback((roomId: string, timerType: TimerType) => {
+    handleTimerExpired(io, roomId, timerType);
+  });
+
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
 
@@ -412,6 +587,9 @@ export function initializeSocketHandlers(io: Server): void {
 
     // Set up player handlers
     setupPlayerHandlers(io, socket);
+
+    // Set up game handlers
+    setupGameHandlers(io, socket);
 
     // Log errors
     socket.on('error', (error) => {

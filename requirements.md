@@ -130,7 +130,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Add handlers for: player:ready, player:update-name. Emit: player:updated, ready:all-ready when all players are ready.
 
 ### TASK-020: Implement game Socket events
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-014, TASK-015
 - **Description**: Add handlers for: game:start (host only). Emit: game:countdown (3,2,1), round:start (question, duration), round:timer-tick (seconds remaining).
