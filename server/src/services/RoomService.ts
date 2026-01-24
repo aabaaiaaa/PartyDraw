@@ -290,6 +290,135 @@ export class RoomService {
   }
 
   /**
+   * Sets a player's ready status
+   * @param socketId - Socket ID of the player
+   * @param isReady - Whether the player is ready
+   * @returns Result containing the updated room and player, or an error
+   */
+  setPlayerReady(
+    socketId: string,
+    isReady: boolean
+  ): RoomResult<{ room: Room; player: Player; allReady: boolean }> {
+    const playerInfo = this.socketToPlayer.get(socketId);
+
+    if (!playerInfo) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found for this socket',
+      };
+    }
+
+    const { roomId, playerId } = playerInfo;
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room not found',
+      };
+    }
+
+    const player = room.players.get(playerId);
+
+    if (!player) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found in room',
+      };
+    }
+
+    // Update player's ready status
+    const updatedPlayer: Player = {
+      ...player,
+      isReady,
+    };
+
+    // Update the room's player map
+    const newPlayers = new Map(room.players);
+    newPlayers.set(playerId, updatedPlayer);
+    const updatedRoom: Room = {
+      ...room,
+      players: newPlayers,
+    };
+
+    this.rooms.set(roomId, updatedRoom);
+
+    // Check if all players are ready
+    let allReady = updatedRoom.players.size > 0;
+    for (const p of updatedRoom.players.values()) {
+      if (!p.isReady) {
+        allReady = false;
+        break;
+      }
+    }
+
+    return { success: true, data: { room: updatedRoom, player: updatedPlayer, allReady } };
+  }
+
+  /**
+   * Updates a player's name
+   * @param socketId - Socket ID of the player
+   * @param newName - The new name for the player
+   * @returns Result containing the updated room and player, or an error
+   */
+  updatePlayerName(
+    socketId: string,
+    newName: string
+  ): RoomResult<{ room: Room; player: Player }> {
+    const playerInfo = this.socketToPlayer.get(socketId);
+
+    if (!playerInfo) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found for this socket',
+      };
+    }
+
+    const { roomId, playerId } = playerInfo;
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room not found',
+      };
+    }
+
+    const player = room.players.get(playerId);
+
+    if (!player) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found in room',
+      };
+    }
+
+    // Update player's name
+    const updatedPlayer: Player = {
+      ...player,
+      name: newName,
+    };
+
+    // Update the room's player map
+    const newPlayers = new Map(room.players);
+    newPlayers.set(playerId, updatedPlayer);
+    const updatedRoom: Room = {
+      ...room,
+      players: newPlayers,
+    };
+
+    this.rooms.set(roomId, updatedRoom);
+
+    return { success: true, data: { room: updatedRoom, player: updatedPlayer } };
+  }
+
+  /**
    * Gets all active rooms (for debugging/admin)
    * @returns Array of all active rooms
    */

@@ -273,6 +273,130 @@ export function setupRoomHandlers(io: Server, socket: Socket): void {
 }
 
 /**
+ * Sets up player-related socket event handlers
+ * @param io - The Socket.IO server instance
+ * @param socket - The connected socket
+ */
+export function setupPlayerHandlers(io: Server, socket: Socket): void {
+  /**
+   * Handle player:ready event
+   * Sets the player's ready status
+   */
+  socket.on(
+    'player:ready',
+    (data: { isReady: boolean }, callback?: (response: object) => void) => {
+      const isReady = data?.isReady ?? true;
+
+      console.log(`[player:ready] Socket ${socket.id} setting ready to ${isReady}`);
+
+      const result = roomService.setPlayerReady(socket.id, isReady);
+
+      if (!result.success) {
+        emitRoomError(socket, result.error, result.message);
+        if (callback) {
+          callback({ success: false, error: result.error, message: result.message });
+        }
+        return;
+      }
+
+      const { room, player, allReady } = result.data;
+
+      console.log(
+        `[player:ready] Player "${player.name}" is now ${isReady ? 'ready' : 'not ready'} in room ${room.code}`
+      );
+
+      // Emit player:updated event to all players in the room
+      io.to(room.id).emit('player:updated', {
+        player: serializePlayer(player),
+      });
+
+      // If all players are ready, emit ready:all-ready event
+      if (allReady) {
+        console.log(`[player:ready] All players are ready in room ${room.code}`);
+        io.to(room.id).emit('ready:all-ready', {
+          playerCount: room.players.size,
+        });
+      }
+
+      if (callback) {
+        callback({
+          success: true,
+          player: serializePlayer(player),
+          allReady,
+        });
+      }
+    }
+  );
+
+  /**
+   * Handle player:update-name event
+   * Updates the player's display name
+   */
+  socket.on(
+    'player:update-name',
+    (data: { name: string }, callback?: (response: object) => void) => {
+      const { name } = data;
+
+      console.log(`[player:update-name] Socket ${socket.id} updating name to "${name}"`);
+
+      if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        emitRoomError(socket, 'PLAYER_NOT_FOUND', 'Invalid name provided');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'INVALID_NAME',
+            message: 'Name must be a non-empty string',
+          });
+        }
+        return;
+      }
+
+      const trimmedName = name.trim();
+
+      // Limit name length to prevent abuse
+      if (trimmedName.length > 30) {
+        if (callback) {
+          callback({
+            success: false,
+            error: 'INVALID_NAME',
+            message: 'Name must be 30 characters or less',
+          });
+        }
+        return;
+      }
+
+      const result = roomService.updatePlayerName(socket.id, trimmedName);
+
+      if (!result.success) {
+        emitRoomError(socket, result.error, result.message);
+        if (callback) {
+          callback({ success: false, error: result.error, message: result.message });
+        }
+        return;
+      }
+
+      const { room, player } = result.data;
+
+      console.log(
+        `[player:update-name] Player name updated to "${player.name}" in room ${room.code}`
+      );
+
+      // Emit player:updated event to all players in the room
+      io.to(room.id).emit('player:updated', {
+        player: serializePlayer(player),
+      });
+
+      if (callback) {
+        callback({
+          success: true,
+          player: serializePlayer(player),
+        });
+      }
+    }
+  );
+}
+
+/**
  * Initializes all socket handlers on the Socket.IO server
  * @param io - The Socket.IO server instance
  */
@@ -285,6 +409,9 @@ export function initializeSocketHandlers(io: Server): void {
 
     // Set up room handlers
     setupRoomHandlers(io, socket);
+
+    // Set up player handlers
+    setupPlayerHandlers(io, socket);
 
     // Log errors
     socket.on('error', (error) => {

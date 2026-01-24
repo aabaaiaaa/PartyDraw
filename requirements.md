@@ -124,7 +124,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/socket/index.ts` with handlers for: room:create, room:join, room:leave. Emit: room:created, room:joined, room:player-joined, room:player-left, room:error.
 
 ### TASK-019: Implement player Socket events
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-018
 - **Description**: Add handlers for: player:ready, player:update-name. Emit: player:updated, ready:all-ready when all players are ready.
