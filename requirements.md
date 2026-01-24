@@ -176,7 +176,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/hooks/useGameState.ts` that listens to all game-related socket events and maintains current game state (status, players, round, question, drawings, votes, scores).
 
 ### TASK-027: Implement App routing
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-025
 - **Description**: Update `client/src/App.tsx` to render HostScreen if sharedDeviceId is present, otherwise render PlayerScreen. Initialize ConsoleCapture on mount.
