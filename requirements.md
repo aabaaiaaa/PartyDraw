@@ -142,7 +142,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Add handlers for: drawing:submit (base64 image data). Emit: drawing:submitted (count update), drawing:all-submitted. Auto-submit remaining drawings when timer expires.
 
 ### TASK-022: Implement voting Socket events
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-021
 - **Description**: Add handlers for: vote:cast (playerId). Emit: round:voting-start (all drawings), vote:received, round:results (winner, scores), game:end (final standings). Prevent voting for own drawing.

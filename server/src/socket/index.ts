@@ -11,9 +11,17 @@ import {
   resetGameStateForNewRound,
   submitDrawing,
   haveAllPlayersSubmittedDrawings,
+  castVote,
+  haveAllPlayersVoted,
 } from '../models/Room';
-import { Player } from '../models/Player';
-import { transitionToCountdown, transitionToDrawing, transitionToVoting } from '../models/Game';
+import { Player, updateHeartbeat } from '../models/Player';
+import {
+  transitionToCountdown,
+  transitionToDrawing,
+  transitionToVoting,
+  transitionToResults,
+  getNextStateAfterResults,
+} from '../models/Game';
 import { timerService, TimerType } from '../services/TimerService';
 
 /**
@@ -627,6 +635,87 @@ export function setupDrawingHandlers(io: Server, socket: Socket): void {
 }
 
 /**
+ * Calculates the vote count for each player
+ * @param votes - Map of voter ID to voted-for player ID
+ * @returns Map of player ID to vote count
+ */
+function calculateVoteCounts(votes: Map<string, string>): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const votedForId of votes.values()) {
+    counts.set(votedForId, (counts.get(votedForId) || 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Finds the winner(s) of the round based on vote counts
+ * @param voteCounts - Map of player ID to vote count
+ * @returns Array of player IDs with the highest vote count (may be multiple in case of tie)
+ */
+function findWinners(voteCounts: Map<string, number>): string[] {
+  let maxVotes = 0;
+  const winners: string[] = [];
+
+  for (const [playerId, count] of voteCounts.entries()) {
+    if (count > maxVotes) {
+      maxVotes = count;
+      winners.length = 0;
+      winners.push(playerId);
+    } else if (count === maxVotes) {
+      winners.push(playerId);
+    }
+  }
+
+  return winners;
+}
+
+/**
+ * Updates player scores based on votes received
+ * Each vote gives 100 points
+ * @param room - The room to update
+ * @param voteCounts - Map of player ID to vote count
+ * @returns Updated room with new player scores
+ */
+function updatePlayerScores(room: Room, voteCounts: Map<string, number>): Room {
+  const newPlayers = new Map(room.players);
+
+  for (const [playerId, voteCount] of voteCounts.entries()) {
+    const player = newPlayers.get(playerId);
+    if (player) {
+      const pointsEarned = voteCount * 100;
+      newPlayers.set(playerId, {
+        ...player,
+        score: player.score + pointsEarned,
+      });
+    }
+  }
+
+  return {
+    ...room,
+    players: newPlayers,
+  };
+}
+
+/**
+ * Gets player scores sorted by score descending
+ * @param room - The room
+ * @returns Array of player scores sorted by score
+ */
+function getSortedScores(room: Room): Array<{ playerId: string; playerName: string; score: number }> {
+  const scores: Array<{ playerId: string; playerName: string; score: number }> = [];
+
+  for (const player of room.players.values()) {
+    scores.push({
+      playerId: player.id,
+      playerName: player.name,
+      score: player.score,
+    });
+  }
+
+  return scores.sort((a, b) => b.score - a.score);
+}
+
+/**
  * Transitions the room to the voting phase
  * @param io - The Socket.IO server instance
  * @param room - The room to transition
@@ -708,6 +797,167 @@ function autoSubmitRemainingDrawings(io: Server, room: Room): void {
 }
 
 /**
+ * Transitions the room to the results phase and calculates scores
+ * @param io - The Socket.IO server instance
+ * @param room - The room to transition
+ */
+function transitionToResultsPhase(io: Server, room: Room): void {
+  try {
+    transitionToResults(room);
+  } catch (error) {
+    console.error(`[transition] Failed to transition to results:`, error);
+    return;
+  }
+
+  // Calculate vote counts
+  const voteCounts = calculateVoteCounts(room.gameState.votes);
+
+  // Update player scores
+  let updatedRoom = updatePlayerScores(room, voteCounts);
+
+  // Update room status to results
+  updatedRoom = {
+    ...updatedRoom,
+    status: 'results',
+  };
+  roomService.updateRoom(updatedRoom);
+
+  // Find winner(s)
+  const winners = findWinners(voteCounts);
+
+  // Prepare vote results for each player
+  const voteResults = Array.from(voteCounts.entries()).map(([playerId, count]) => {
+    const player = updatedRoom.players.get(playerId);
+    return {
+      playerId,
+      playerName: player?.name || 'Unknown',
+      votes: count,
+      pointsEarned: count * 100,
+    };
+  });
+
+  // Get player info for winners
+  const winnerInfo = winners.map((winnerId) => {
+    const player = updatedRoom.players.get(winnerId);
+    return {
+      playerId: winnerId,
+      playerName: player?.name || 'Unknown',
+      votes: voteCounts.get(winnerId) || 0,
+    };
+  });
+
+  console.log(
+    `[transition] Round ${room.gameState.currentRound} results in room ${room.code}: ` +
+      `Winner(s): ${winnerInfo.map((w) => w.playerName).join(', ')}`
+  );
+
+  // Emit round:results event to all players
+  io.to(room.id).emit('round:results', {
+    round: room.gameState.currentRound,
+    winners: winnerInfo,
+    voteResults,
+    scores: getSortedScores(updatedRoom),
+  });
+
+  // Determine next phase: another round or final
+  const nextState = getNextStateAfterResults(updatedRoom);
+
+  // Set a short delay before transitioning to next phase (allow results to be shown)
+  setTimeout(() => {
+    if (nextState === 'final') {
+      // Game is over - transition to final and emit game:end
+      transitionToFinalPhase(io, updatedRoom);
+    } else {
+      // More rounds - start next round
+      startNextRound(io, updatedRoom);
+    }
+  }, 5000); // 5 second delay to show results
+}
+
+/**
+ * Transitions to the final phase and emits game end event
+ * @param io - The Socket.IO server instance
+ * @param room - The room to transition
+ */
+function transitionToFinalPhase(io: Server, room: Room): void {
+  // Get fresh room state in case it was updated
+  const currentRoom = roomService.getRoom(room.id);
+  if (!currentRoom) {
+    console.error(`[transition] Room ${room.id} not found for final transition`);
+    return;
+  }
+
+  // Update room status to final
+  const updatedRoom: Room = {
+    ...currentRoom,
+    status: 'final',
+  };
+  roomService.updateRoom(updatedRoom);
+
+  // Get final standings sorted by score
+  const finalStandings = getSortedScores(updatedRoom);
+
+  console.log(
+    `[transition] Game ended in room ${currentRoom.code}. ` +
+      `Winner: ${finalStandings[0]?.playerName || 'No winner'} with ${finalStandings[0]?.score || 0} points`
+  );
+
+  // Emit game:end event to all players
+  io.to(room.id).emit('game:end', {
+    standings: finalStandings,
+    winner: finalStandings[0] || null,
+    totalRounds: currentRoom.settings.rounds,
+  });
+}
+
+/**
+ * Starts the next round of the game
+ * @param io - The Socket.IO server instance
+ * @param room - The room
+ */
+function startNextRound(io: Server, room: Room): void {
+  // Get fresh room state
+  const currentRoom = roomService.getRoom(room.id);
+  if (!currentRoom) {
+    console.error(`[transition] Room ${room.id} not found for next round`);
+    return;
+  }
+
+  // Prepare for next round
+  const nextRound = currentRoom.gameState.currentRound + 1;
+  const question = getRandomQuestion();
+
+  // Reset game state for new round
+  const newGameState = resetGameStateForNewRound(currentRoom.gameState, nextRound, question);
+  const now = Date.now();
+  newGameState.phaseStartTime = now;
+  newGameState.phaseEndTime = now + currentRoom.settings.drawingTime * 1000;
+
+  // Update room
+  const updatedRoom: Room = {
+    ...currentRoom,
+    status: 'drawing',
+    gameState: newGameState,
+  };
+  roomService.updateRoom(updatedRoom);
+
+  console.log(
+    `[transition] Starting round ${nextRound} in room ${currentRoom.code} with question: "${question}"`
+  );
+
+  // Emit round:start event to all players
+  io.to(room.id).emit('round:start', {
+    round: nextRound,
+    totalRounds: currentRoom.settings.rounds,
+    question,
+    duration: currentRoom.settings.drawingTime,
+  });
+
+  // Start the drawing timer
+  timerService.startDrawingTimer(room.id, currentRoom.settings.drawingTime);
+}
+
+/**
  * Handles timer expiration events from the TimerService
  * @param io - The Socket.IO server instance
  * @param roomId - The room ID where the timer expired
@@ -779,7 +1029,161 @@ function handleTimerExpired(io: Server, roomId: string, timerType: TimerType): v
     autoSubmitRemainingDrawings(io, room);
   }
 
-  // Note: voting timer expiration will be handled in TASK-022
+  if (timerType === 'voting') {
+    // Voting timer expired - transition to results
+    console.log(`[timer:expired] Voting timer expired in room ${room.code}`);
+
+    // Emit voting phase ended event
+    io.to(roomId).emit('round:voting-phase-ended', {
+      reason: 'timer_expired',
+    });
+
+    // Transition to results phase
+    transitionToResultsPhase(io, room);
+  }
+}
+
+/**
+ * Sets up voting-related socket event handlers
+ * @param io - The Socket.IO server instance
+ * @param socket - The connected socket
+ */
+export function setupVotingHandlers(io: Server, socket: Socket): void {
+  /**
+   * Handle vote:cast event
+   * Casts a vote for a player's drawing
+   */
+  socket.on(
+    'vote:cast',
+    (data: { votedForId: string }, callback?: (response: object) => void) => {
+      const { votedForId } = data;
+
+      console.log(`[vote:cast] Socket ${socket.id} voting for player ${votedForId}`);
+
+      // Validate voted player ID
+      if (!votedForId || typeof votedForId !== 'string') {
+        emitRoomError(socket, 'PLAYER_NOT_FOUND', 'Invalid vote target');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'INVALID_VOTE',
+            message: 'Vote target is required',
+          });
+        }
+        return;
+      }
+
+      // Get the room for this socket
+      const roomInfo = roomService.getRoomBySocket(socket.id);
+
+      if (!roomInfo) {
+        emitRoomError(socket, 'ROOM_NOT_FOUND', 'You are not in a room');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'ROOM_NOT_FOUND',
+            message: 'You are not in a room',
+          });
+        }
+        return;
+      }
+
+      const { room, playerId } = roomInfo;
+
+      // Verify game is in voting phase
+      if (room.status !== 'voting') {
+        emitRoomError(socket, 'GAME_IN_PROGRESS', 'Not in voting phase');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'WRONG_PHASE',
+            message: 'Cannot vote outside of voting phase',
+          });
+        }
+        return;
+      }
+
+      // Prevent voting for own drawing
+      if (votedForId === playerId) {
+        if (callback) {
+          callback({
+            success: false,
+            error: 'CANNOT_VOTE_SELF',
+            message: 'You cannot vote for your own drawing',
+          });
+        }
+        return;
+      }
+
+      // Verify voted player exists and has a drawing
+      if (!room.gameState.drawings.has(votedForId)) {
+        if (callback) {
+          callback({
+            success: false,
+            error: 'INVALID_VOTE',
+            message: 'Cannot vote for a player without a drawing',
+          });
+        }
+        return;
+      }
+
+      // Check if player already voted
+      if (room.gameState.votes.has(playerId)) {
+        if (callback) {
+          callback({
+            success: false,
+            error: 'ALREADY_VOTED',
+            message: 'You have already voted',
+          });
+        }
+        return;
+      }
+
+      // Cast the vote
+      const updatedRoom = castVote(room, playerId, votedForId);
+      roomService.updateRoom(updatedRoom);
+
+      const votedCount = updatedRoom.gameState.votes.size;
+      const totalPlayers = updatedRoom.players.size;
+
+      console.log(
+        `[vote:cast] Vote cast in room ${room.code} (${votedCount}/${totalPlayers})`
+      );
+
+      // Emit vote:received event to all players
+      io.to(room.id).emit('vote:received', {
+        voterId: playerId,
+        votedCount,
+        totalPlayers,
+      });
+
+      // Check if all players have voted
+      if (haveAllPlayersVoted(updatedRoom)) {
+        console.log(
+          `[vote:cast] All players have voted in room ${room.code}, transitioning to results`
+        );
+
+        // Clear the voting timer
+        timerService.clearTimer(room.id);
+
+        // Emit voting:all-voted event
+        io.to(room.id).emit('voting:all-voted', {
+          votedCount,
+        });
+
+        // Transition to results phase
+        transitionToResultsPhase(io, updatedRoom);
+      }
+
+      if (callback) {
+        callback({
+          success: true,
+          votedCount,
+          totalPlayers,
+        });
+      }
+    }
+  );
 }
 
 /**
@@ -812,6 +1216,9 @@ export function initializeSocketHandlers(io: Server): void {
 
     // Set up drawing handlers
     setupDrawingHandlers(io, socket);
+
+    // Set up voting handlers
+    setupVotingHandlers(io, socket);
 
     // Log errors
     socket.on('error', (error) => {
