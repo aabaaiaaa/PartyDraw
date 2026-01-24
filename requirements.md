@@ -216,7 +216,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/components/host/QuestionDisplay.tsx` that shows current question prominently, large countdown timer, and submission progress (e.g., "3/5 players submitted").
 
 ### TASK-033: Create DrawingGallery component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-028
 - **Description**: Create `client/src/components/host/DrawingGallery.tsx` that displays all submitted drawings in a responsive grid during voting phase. Show player names under each drawing.

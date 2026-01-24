@@ -16,9 +16,9 @@ import { useGameState, RoomStatus } from '../hooks/useGameState';
 import HostLobby from '../components/host/HostLobby';
 import Countdown from '../components/host/Countdown';
 import QuestionDisplay from '../components/host/QuestionDisplay';
+import DrawingGallery from '../components/host/DrawingGallery';
 
-// TODO: Import actual components when implemented (TASK-030, TASK-033 to TASK-035)
-// import DrawingGallery from '../components/host/DrawingGallery';
+// TODO: Import actual components when implemented (TASK-030, TASK-034 to TASK-035)
 // import VotingResults from '../components/host/VotingResults';
 // import Leaderboard from '../components/host/Leaderboard';
 
@@ -26,50 +26,6 @@ interface HostScreenProps {
   deviceId: string;
 }
 
-/**
- * Placeholder component for DrawingGallery (TASK-033)
- * Displays all drawings during voting phase
- */
-function DrawingGalleryPlaceholder({
-  drawings,
-  timerSeconds,
-  players,
-}: {
-  drawings: Array<{ playerId: string; drawingData: string }>;
-  timerSeconds: number | null;
-  players: Array<{ id: string; name: string }>;
-}) {
-  const getPlayerName = (playerId: string) => {
-    const player = players.find((p) => p.id === playerId);
-    return player?.name || 'Unknown';
-  };
-
-  return (
-    <div className="text-center">
-      <h2 className="text-3xl font-bold text-purple-800 mb-4">Vote Now!</h2>
-      <div className="text-4xl font-bold text-orange-500 mb-6">
-        {timerSeconds !== null ? timerSeconds : '--'}
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {drawings.map((drawing) => (
-          <div
-            key={drawing.playerId}
-            className="bg-white rounded-lg shadow-md p-2"
-          >
-            <img
-              src={drawing.drawingData}
-              alt={`Drawing by ${getPlayerName(drawing.playerId)}`}
-              className="w-full aspect-square object-contain bg-gray-50 rounded"
-            />
-            <p className="mt-2 font-medium text-gray-700">
-              {getPlayerName(drawing.playerId)}
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /**
  * Placeholder component for VotingResults (TASK-034)
@@ -204,10 +160,12 @@ function renderGameContent(
 
     case 'voting':
       return (
-        <DrawingGalleryPlaceholder
+        <DrawingGallery
           drawings={gameState.drawings}
           timerSeconds={gameState.timerSeconds}
           players={gameState.players}
+          votedCount={gameState.votedCount}
+          totalVoters={gameState.players.length}
         />
       );
 
