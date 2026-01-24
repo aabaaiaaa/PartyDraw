@@ -170,7 +170,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/utils/deviceId.ts` that parses URL params: sharedDeviceId (for host screen) and playerDeviceId (for player screen). Used by TestBoardBed to identify device roles.
 
 ### TASK-026: Create useGameState hook
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-024
 - **Description**: Create `client/src/hooks/useGameState.ts` that listens to all game-related socket events and maintains current game state (status, players, round, question, drawings, votes, scores).
