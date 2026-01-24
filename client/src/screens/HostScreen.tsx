@@ -13,9 +13,9 @@
 
 import { useEffect } from 'react';
 import { useGameState, RoomStatus } from '../hooks/useGameState';
+import HostLobby from '../components/host/HostLobby';
 
-// TODO: Import actual components when implemented (TASK-029 to TASK-035)
-// import HostLobby from '../components/host/HostLobby';
+// TODO: Import actual components when implemented (TASK-030 to TASK-035)
 // import Countdown from '../components/host/Countdown';
 // import QuestionDisplay from '../components/host/QuestionDisplay';
 // import DrawingGallery from '../components/host/DrawingGallery';
@@ -26,60 +26,6 @@ interface HostScreenProps {
   deviceId: string;
 }
 
-/**
- * Placeholder component for HostLobby (TASK-029)
- * Displays QR code, room code, and player list
- */
-function HostLobbyPlaceholder({
-  roomCode,
-  players,
-}: {
-  roomCode: string;
-  players: Array<{ id: string; name: string; color: string; isReady: boolean }>;
-}) {
-  return (
-    <div className="text-center">
-      <h2 className="text-3xl font-bold text-purple-800 mb-6">
-        Join the Game!
-      </h2>
-      <div className="bg-white rounded-xl p-6 mb-6 inline-block shadow-lg">
-        <p className="text-gray-600 mb-2">Room Code</p>
-        <p className="text-5xl font-bold tracking-widest text-purple-700">
-          {roomCode}
-        </p>
-      </div>
-      <div className="mt-6">
-        <p className="text-gray-600 mb-4">
-          Players ({players.length}/8)
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          {players.map((player) => (
-            <div
-              key={player.id}
-              className={`px-4 py-2 rounded-full flex items-center gap-2 ${
-                player.isReady
-                  ? 'bg-green-100 border-2 border-green-400'
-                  : 'bg-gray-100 border-2 border-gray-300'
-              }`}
-            >
-              <div
-                className="w-6 h-6 rounded-full"
-                style={{ backgroundColor: player.color }}
-              />
-              <span className="font-medium">{player.name}</span>
-              {player.isReady && (
-                <span className="text-green-600 text-sm">✓</span>
-              )}
-            </div>
-          ))}
-          {players.length === 0 && (
-            <p className="text-gray-500 italic">Waiting for players to join...</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Placeholder component for Countdown (TASK-031)
@@ -288,7 +234,7 @@ function renderGameContent(
   switch (status) {
     case 'lobby':
       return (
-        <HostLobbyPlaceholder
+        <HostLobby
           roomCode={gameState.roomCode || '------'}
           players={gameState.players}
         />

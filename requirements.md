@@ -192,7 +192,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/screens/HostScreen.tsx` that renders different components based on game status: HostLobby, Countdown, QuestionDisplay, DrawingGallery, VotingResults, or Leaderboard.
 
 ### TASK-029: Create HostLobby component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-028
 - **Description**: Create `client/src/components/host/HostLobby.tsx` that displays: large QR code with room URL, room code text, player list with avatars and ready indicators, "Waiting for players" message.
