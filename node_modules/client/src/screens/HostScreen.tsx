@@ -14,9 +14,9 @@
 import { useEffect } from 'react';
 import { useGameState, RoomStatus } from '../hooks/useGameState';
 import HostLobby from '../components/host/HostLobby';
+import Countdown from '../components/host/Countdown';
 
-// TODO: Import actual components when implemented (TASK-030 to TASK-035)
-// import Countdown from '../components/host/Countdown';
+// TODO: Import actual components when implemented (TASK-030, TASK-032 to TASK-035)
 // import QuestionDisplay from '../components/host/QuestionDisplay';
 // import DrawingGallery from '../components/host/DrawingGallery';
 // import VotingResults from '../components/host/VotingResults';
@@ -26,21 +26,6 @@ interface HostScreenProps {
   deviceId: string;
 }
 
-
-/**
- * Placeholder component for Countdown (TASK-031)
- * Displays animated 3-2-1-GO! countdown
- */
-function CountdownPlaceholder({ count }: { count: number | null }) {
-  return (
-    <div className="text-center">
-      <p className="text-2xl text-purple-600 mb-4">Get Ready!</p>
-      <div className="text-9xl font-bold text-purple-800 animate-pulse">
-        {count === 0 ? 'GO!' : count}
-      </div>
-    </div>
-  );
-}
 
 /**
  * Placeholder component for QuestionDisplay (TASK-032)
@@ -241,7 +226,7 @@ function renderGameContent(
       );
 
     case 'countdown':
-      return <CountdownPlaceholder count={gameState.countdownValue} />;
+      return <Countdown count={gameState.countdownValue} />;
 
     case 'drawing':
       return (

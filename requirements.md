@@ -204,7 +204,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/components/host/QRCodeDisplay.tsx` using qrcode.react to render scannable QR code for the room join URL.
 
 ### TASK-031: Create Countdown component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-028
 - **Description**: Create `client/src/components/host/Countdown.tsx` that displays animated 3-2-1-GO! countdown with large numbers, pulsing animation, and sound effects.
