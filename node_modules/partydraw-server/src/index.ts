@@ -1,6 +1,7 @@
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createApp, CORS_OPTIONS } from './app';
+import { initializeSocketHandlers } from './socket';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
@@ -17,21 +18,8 @@ const io = new Server(httpServer, {
   pingInterval: 25000,
 });
 
-// Socket.IO connection handler
-io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-
-  // Acknowledge connection
-  socket.emit('connected', { socketId: socket.id });
-
-  socket.on('disconnect', (reason) => {
-    console.log(`Client disconnected: ${socket.id}, reason: ${reason}`);
-  });
-
-  socket.on('error', (error) => {
-    console.error(`Socket error for ${socket.id}:`, error);
-  });
-});
+// Initialize socket handlers
+initializeSocketHandlers(io);
 
 // Start server
 httpServer.listen(PORT, () => {

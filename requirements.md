@@ -118,7 +118,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 3: Socket Event Handlers
 
 ### TASK-018: Implement room Socket events
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-013
 - **Description**: Create `server/src/socket/index.ts` with handlers for: room:create, room:join, room:leave. Emit: room:created, room:joined, room:player-joined, room:player-left, room:error.
