@@ -152,7 +152,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 4: Client Core
 
 ### TASK-023: Create Socket.IO client connection
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-006
 - **Description**: Create `client/src/core/socket.ts` with Socket.IO client that connects to server on port 3001. Include reconnection logic and connection state management.
