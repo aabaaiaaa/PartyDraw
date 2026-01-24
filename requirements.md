@@ -210,7 +210,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/components/host/Countdown.tsx` that displays animated 3-2-1-GO! countdown with large numbers, pulsing animation, and sound effects.
 
 ### TASK-032: Create QuestionDisplay component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-028
 - **Description**: Create `client/src/components/host/QuestionDisplay.tsx` that shows current question prominently, large countdown timer, and submission progress (e.g., "3/5 players submitted").

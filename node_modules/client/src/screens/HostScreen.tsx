@@ -15,53 +15,15 @@ import { useEffect } from 'react';
 import { useGameState, RoomStatus } from '../hooks/useGameState';
 import HostLobby from '../components/host/HostLobby';
 import Countdown from '../components/host/Countdown';
+import QuestionDisplay from '../components/host/QuestionDisplay';
 
-// TODO: Import actual components when implemented (TASK-030, TASK-032 to TASK-035)
-// import QuestionDisplay from '../components/host/QuestionDisplay';
+// TODO: Import actual components when implemented (TASK-030, TASK-033 to TASK-035)
 // import DrawingGallery from '../components/host/DrawingGallery';
 // import VotingResults from '../components/host/VotingResults';
 // import Leaderboard from '../components/host/Leaderboard';
 
 interface HostScreenProps {
   deviceId: string;
-}
-
-
-/**
- * Placeholder component for QuestionDisplay (TASK-032)
- * Shows current question and timer during drawing phase
- */
-function QuestionDisplayPlaceholder({
-  question,
-  timerSeconds,
-  submittedCount,
-  totalPlayers,
-  round,
-  totalRounds,
-}: {
-  question: string;
-  timerSeconds: number | null;
-  submittedCount: number;
-  totalPlayers: number;
-  round: number;
-  totalRounds: number;
-}) {
-  return (
-    <div className="text-center">
-      <p className="text-lg text-purple-600 mb-2">
-        Round {round} of {totalRounds}
-      </p>
-      <h2 className="text-4xl font-bold text-purple-800 mb-8">
-        Draw: {question}
-      </h2>
-      <div className="text-8xl font-bold text-orange-500 mb-6">
-        {timerSeconds !== null ? timerSeconds : '--'}
-      </div>
-      <p className="text-xl text-gray-600">
-        {submittedCount} / {totalPlayers} submitted
-      </p>
-    </div>
-  );
 }
 
 /**
@@ -230,7 +192,7 @@ function renderGameContent(
 
     case 'drawing':
       return (
-        <QuestionDisplayPlaceholder
+        <QuestionDisplay
           question={gameState.question || ''}
           timerSeconds={gameState.timerSeconds}
           submittedCount={gameState.submittedCount}
