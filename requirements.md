@@ -164,7 +164,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/hooks/useSocket.ts` that provides socket instance, connection status, and methods to emit events. Handle disconnection and reconnection.
 
 ### TASK-025: Implement URL parameter parsing
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-003
 - **Description**: Create `client/src/utils/deviceId.ts` that parses URL params: sharedDeviceId (for host screen) and playerDeviceId (for player screen). Used by TestBoardBed to identify device roles.
