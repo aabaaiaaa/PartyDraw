@@ -5,9 +5,15 @@
 
 import { Server, Socket } from 'socket.io';
 import { roomService, RoomError } from '../services/RoomService';
-import { Room, updateRoomStatus, resetGameStateForNewRound } from '../models/Room';
+import {
+  Room,
+  updateRoomStatus,
+  resetGameStateForNewRound,
+  submitDrawing,
+  haveAllPlayersSubmittedDrawings,
+} from '../models/Room';
 import { Player } from '../models/Player';
-import { transitionToCountdown, transitionToDrawing } from '../models/Game';
+import { transitionToCountdown, transitionToDrawing, transitionToVoting } from '../models/Game';
 import { timerService, TimerType } from '../services/TimerService';
 
 /**
@@ -502,6 +508,206 @@ export function setupGameHandlers(io: Server, socket: Socket): void {
 }
 
 /**
+ * Sets up drawing-related socket event handlers
+ * @param io - The Socket.IO server instance
+ * @param socket - The connected socket
+ */
+export function setupDrawingHandlers(io: Server, socket: Socket): void {
+  /**
+   * Handle drawing:submit event
+   * Submits a player's drawing for the current round
+   */
+  socket.on(
+    'drawing:submit',
+    (data: { drawingData: string }, callback?: (response: object) => void) => {
+      const { drawingData } = data;
+
+      console.log(`[drawing:submit] Socket ${socket.id} submitting drawing`);
+
+      // Validate drawing data
+      if (!drawingData || typeof drawingData !== 'string') {
+        emitRoomError(socket, 'PLAYER_NOT_FOUND', 'Invalid drawing data');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'INVALID_DRAWING',
+            message: 'Drawing data is required',
+          });
+        }
+        return;
+      }
+
+      // Get the room for this socket
+      const roomInfo = roomService.getRoomBySocket(socket.id);
+
+      if (!roomInfo) {
+        emitRoomError(socket, 'ROOM_NOT_FOUND', 'You are not in a room');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'ROOM_NOT_FOUND',
+            message: 'You are not in a room',
+          });
+        }
+        return;
+      }
+
+      const { room, playerId } = roomInfo;
+
+      // Verify game is in drawing phase
+      if (room.status !== 'drawing') {
+        emitRoomError(socket, 'GAME_IN_PROGRESS', 'Not in drawing phase');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'WRONG_PHASE',
+            message: 'Cannot submit drawing outside of drawing phase',
+          });
+        }
+        return;
+      }
+
+      // Check if player already submitted
+      if (room.gameState.drawings.has(playerId)) {
+        if (callback) {
+          callback({
+            success: false,
+            error: 'ALREADY_SUBMITTED',
+            message: 'You have already submitted a drawing',
+          });
+        }
+        return;
+      }
+
+      // Submit the drawing
+      const updatedRoom = submitDrawing(room, playerId, drawingData);
+      roomService.updateRoom(updatedRoom);
+
+      const submittedCount = updatedRoom.gameState.drawings.size;
+      const totalPlayers = updatedRoom.players.size;
+
+      console.log(
+        `[drawing:submit] Drawing submitted by player in room ${room.code} (${submittedCount}/${totalPlayers})`
+      );
+
+      // Emit drawing:submitted event to all players
+      io.to(room.id).emit('drawing:submitted', {
+        playerId,
+        submittedCount,
+        totalPlayers,
+      });
+
+      // Check if all players have submitted
+      if (haveAllPlayersSubmittedDrawings(updatedRoom)) {
+        console.log(
+          `[drawing:submit] All players have submitted in room ${room.code}, transitioning to voting`
+        );
+
+        // Clear the drawing timer
+        timerService.clearTimer(room.id);
+
+        // Emit drawing:all-submitted event
+        io.to(room.id).emit('drawing:all-submitted', {
+          submittedCount,
+        });
+
+        // Transition to voting phase
+        transitionToVotingPhase(io, updatedRoom);
+      }
+
+      if (callback) {
+        callback({
+          success: true,
+          submittedCount,
+          totalPlayers,
+        });
+      }
+    }
+  );
+}
+
+/**
+ * Transitions the room to the voting phase
+ * @param io - The Socket.IO server instance
+ * @param room - The room to transition
+ */
+function transitionToVotingPhase(io: Server, room: Room): void {
+  try {
+    transitionToVoting(room);
+  } catch (error) {
+    console.error(`[transition] Failed to transition to voting:`, error);
+    return;
+  }
+
+  // Update room status
+  const now = Date.now();
+  const updatedRoom: Room = {
+    ...room,
+    status: 'voting',
+    gameState: {
+      ...room.gameState,
+      phaseStartTime: now,
+      phaseEndTime: now + room.settings.votingTime * 1000,
+    },
+  };
+  roomService.updateRoom(updatedRoom);
+
+  // Prepare drawings for broadcast (convert Map to array)
+  const drawings = Array.from(updatedRoom.gameState.drawings.entries()).map(
+    ([playerId, drawingData]) => ({
+      playerId,
+      drawingData,
+    })
+  );
+
+  console.log(
+    `[transition] Starting voting phase in room ${room.code} with ${drawings.length} drawings`
+  );
+
+  // Emit round:voting-start event to all players
+  io.to(room.id).emit('round:voting-start', {
+    drawings,
+    duration: room.settings.votingTime,
+  });
+
+  // Start the voting timer
+  timerService.startVotingTimer(room.id, room.settings.votingTime);
+}
+
+/**
+ * Auto-submits blank drawings for players who haven't submitted
+ * Called when the drawing timer expires
+ * @param io - The Socket.IO server instance
+ * @param room - The room
+ */
+function autoSubmitRemainingDrawings(io: Server, room: Room): void {
+  let updatedRoom = room;
+  const blankDrawing = ''; // Empty string represents no drawing submitted
+
+  // Find players who haven't submitted
+  for (const player of room.players.values()) {
+    if (player.isConnected && !room.gameState.drawings.has(player.id)) {
+      console.log(
+        `[auto-submit] Auto-submitting blank drawing for player "${player.name}" in room ${room.code}`
+      );
+      updatedRoom = submitDrawing(updatedRoom, player.id, blankDrawing);
+    }
+  }
+
+  roomService.updateRoom(updatedRoom);
+
+  const submittedCount = updatedRoom.gameState.drawings.size;
+
+  // Emit drawing:all-submitted event
+  io.to(room.id).emit('drawing:all-submitted', {
+    submittedCount,
+  });
+
+  // Transition to voting phase
+  transitionToVotingPhase(io, updatedRoom);
+}
+
+/**
  * Handles timer expiration events from the TimerService
  * @param io - The Socket.IO server instance
  * @param roomId - The room ID where the timer expired
@@ -560,7 +766,20 @@ function handleTimerExpired(io: Server, roomId: string, timerType: TimerType): v
     timerService.startDrawingTimer(roomId, room.settings.drawingTime);
   }
 
-  // Note: drawing and voting timer expirations will be handled in TASK-021 and TASK-022
+  if (timerType === 'drawing') {
+    // Drawing timer expired - auto-submit remaining drawings
+    console.log(`[timer:expired] Drawing timer expired in room ${room.code}`);
+
+    // Emit timer:expired event to notify clients
+    io.to(roomId).emit('round:drawing-phase-ended', {
+      reason: 'timer_expired',
+    });
+
+    // Auto-submit blank drawings for players who haven't submitted
+    autoSubmitRemainingDrawings(io, room);
+  }
+
+  // Note: voting timer expiration will be handled in TASK-022
 }
 
 /**
@@ -590,6 +809,9 @@ export function initializeSocketHandlers(io: Server): void {
 
     // Set up game handlers
     setupGameHandlers(io, socket);
+
+    // Set up drawing handlers
+    setupDrawingHandlers(io, socket);
 
     // Log errors
     socket.on('error', (error) => {

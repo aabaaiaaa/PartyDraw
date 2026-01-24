@@ -136,7 +136,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Add handlers for: game:start (host only). Emit: game:countdown (3,2,1), round:start (question, duration), round:timer-tick (seconds remaining).
 
 ### TASK-021: Implement drawing Socket events
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-020
 - **Description**: Add handlers for: drawing:submit (base64 image data). Emit: drawing:submitted (count update), drawing:all-submitted. Auto-submit remaining drawings when timer expires.
