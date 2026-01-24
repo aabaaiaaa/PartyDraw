@@ -186,7 +186,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 5: Host Screen Components
 
 ### TASK-028: Create HostScreen container
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-027
 - **Description**: Create `client/src/screens/HostScreen.tsx` that renders different components based on game status: HostLobby, Countdown, QuestionDisplay, DrawingGallery, VotingResults, or Leaderboard.

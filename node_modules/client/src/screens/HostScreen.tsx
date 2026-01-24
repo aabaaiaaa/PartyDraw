@@ -11,27 +11,394 @@
  * - Leaderboard: Final standings with podium animation
  */
 
+import { useEffect } from 'react';
+import { useGameState, RoomStatus } from '../hooks/useGameState';
+
+// TODO: Import actual components when implemented (TASK-029 to TASK-035)
+// import HostLobby from '../components/host/HostLobby';
+// import Countdown from '../components/host/Countdown';
+// import QuestionDisplay from '../components/host/QuestionDisplay';
+// import DrawingGallery from '../components/host/DrawingGallery';
+// import VotingResults from '../components/host/VotingResults';
+// import Leaderboard from '../components/host/Leaderboard';
+
 interface HostScreenProps {
   deviceId: string;
 }
 
-function HostScreen({ deviceId }: HostScreenProps) {
+/**
+ * Placeholder component for HostLobby (TASK-029)
+ * Displays QR code, room code, and player list
+ */
+function HostLobbyPlaceholder({
+  roomCode,
+  players,
+}: {
+  roomCode: string;
+  players: Array<{ id: string; name: string; color: string; isReady: boolean }>;
+}) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center">
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-4">
-        <h1 className="text-4xl font-bold text-center text-purple-800 mb-4">
-          PartyDraw
-        </h1>
-        <p className="text-center text-gray-600 mb-6">
-          Host Screen
+    <div className="text-center">
+      <h2 className="text-3xl font-bold text-purple-800 mb-6">
+        Join the Game!
+      </h2>
+      <div className="bg-white rounded-xl p-6 mb-6 inline-block shadow-lg">
+        <p className="text-gray-600 mb-2">Room Code</p>
+        <p className="text-5xl font-bold tracking-widest text-purple-700">
+          {roomCode}
         </p>
-        <div className="bg-purple-100 rounded-lg p-4 text-center">
-          <p className="text-sm text-purple-700">Device ID: {deviceId}</p>
-          <p className="text-lg text-purple-800 mt-2">
-            Waiting for game components to be implemented...
-          </p>
+      </div>
+      <div className="mt-6">
+        <p className="text-gray-600 mb-4">
+          Players ({players.length}/8)
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {players.map((player) => (
+            <div
+              key={player.id}
+              className={`px-4 py-2 rounded-full flex items-center gap-2 ${
+                player.isReady
+                  ? 'bg-green-100 border-2 border-green-400'
+                  : 'bg-gray-100 border-2 border-gray-300'
+              }`}
+            >
+              <div
+                className="w-6 h-6 rounded-full"
+                style={{ backgroundColor: player.color }}
+              />
+              <span className="font-medium">{player.name}</span>
+              {player.isReady && (
+                <span className="text-green-600 text-sm">✓</span>
+              )}
+            </div>
+          ))}
+          {players.length === 0 && (
+            <p className="text-gray-500 italic">Waiting for players to join...</p>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Placeholder component for Countdown (TASK-031)
+ * Displays animated 3-2-1-GO! countdown
+ */
+function CountdownPlaceholder({ count }: { count: number | null }) {
+  return (
+    <div className="text-center">
+      <p className="text-2xl text-purple-600 mb-4">Get Ready!</p>
+      <div className="text-9xl font-bold text-purple-800 animate-pulse">
+        {count === 0 ? 'GO!' : count}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Placeholder component for QuestionDisplay (TASK-032)
+ * Shows current question and timer during drawing phase
+ */
+function QuestionDisplayPlaceholder({
+  question,
+  timerSeconds,
+  submittedCount,
+  totalPlayers,
+  round,
+  totalRounds,
+}: {
+  question: string;
+  timerSeconds: number | null;
+  submittedCount: number;
+  totalPlayers: number;
+  round: number;
+  totalRounds: number;
+}) {
+  return (
+    <div className="text-center">
+      <p className="text-lg text-purple-600 mb-2">
+        Round {round} of {totalRounds}
+      </p>
+      <h2 className="text-4xl font-bold text-purple-800 mb-8">
+        Draw: {question}
+      </h2>
+      <div className="text-8xl font-bold text-orange-500 mb-6">
+        {timerSeconds !== null ? timerSeconds : '--'}
+      </div>
+      <p className="text-xl text-gray-600">
+        {submittedCount} / {totalPlayers} submitted
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Placeholder component for DrawingGallery (TASK-033)
+ * Displays all drawings during voting phase
+ */
+function DrawingGalleryPlaceholder({
+  drawings,
+  timerSeconds,
+  players,
+}: {
+  drawings: Array<{ playerId: string; drawingData: string }>;
+  timerSeconds: number | null;
+  players: Array<{ id: string; name: string }>;
+}) {
+  const getPlayerName = (playerId: string) => {
+    const player = players.find((p) => p.id === playerId);
+    return player?.name || 'Unknown';
+  };
+
+  return (
+    <div className="text-center">
+      <h2 className="text-3xl font-bold text-purple-800 mb-4">Vote Now!</h2>
+      <div className="text-4xl font-bold text-orange-500 mb-6">
+        {timerSeconds !== null ? timerSeconds : '--'}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {drawings.map((drawing) => (
+          <div
+            key={drawing.playerId}
+            className="bg-white rounded-lg shadow-md p-2"
+          >
+            <img
+              src={drawing.drawingData}
+              alt={`Drawing by ${getPlayerName(drawing.playerId)}`}
+              className="w-full aspect-square object-contain bg-gray-50 rounded"
+            />
+            <p className="mt-2 font-medium text-gray-700">
+              {getPlayerName(drawing.playerId)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Placeholder component for VotingResults (TASK-034)
+ * Shows round winner and score breakdown
+ */
+function VotingResultsPlaceholder({
+  winners,
+  voteResults,
+  round,
+}: {
+  winners: Array<{ playerId: string; playerName: string; votes: number }>;
+  voteResults: Array<{
+    playerId: string;
+    playerName: string;
+    votes: number;
+    pointsEarned: number;
+  }>;
+  round: number;
+}) {
+  return (
+    <div className="text-center">
+      <h2 className="text-3xl font-bold text-purple-800 mb-6">
+        Round {round} Results
+      </h2>
+      {winners.length > 0 && (
+        <div className="mb-8">
+          <p className="text-xl text-purple-600 mb-2">Winner</p>
+          <p className="text-4xl font-bold text-yellow-600">
+            🏆 {winners[0].playerName}
+          </p>
+          <p className="text-lg text-gray-600">{winners[0].votes} votes</p>
+        </div>
+      )}
+      <div className="space-y-2">
+        {voteResults.map((result) => (
+          <div
+            key={result.playerId}
+            className="bg-white rounded-lg px-4 py-3 flex justify-between items-center"
+          >
+            <span className="font-medium">{result.playerName}</span>
+            <span className="text-purple-700">
+              {result.votes} votes (+{result.pointsEarned} pts)
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Placeholder component for Leaderboard (TASK-035)
+ * Shows final standings with podium
+ */
+function LeaderboardPlaceholder({
+  standings,
+  winner,
+}: {
+  standings: Array<{ playerId: string; playerName: string; score: number }>;
+  winner: { playerId: string; playerName: string; score: number } | null;
+}) {
+  return (
+    <div className="text-center">
+      <h2 className="text-4xl font-bold text-purple-800 mb-8">Final Results!</h2>
+      {winner && (
+        <div className="mb-8">
+          <p className="text-2xl text-yellow-600 mb-2">🎉 Winner 🎉</p>
+          <p className="text-5xl font-bold text-purple-700">{winner.playerName}</p>
+          <p className="text-2xl text-gray-600 mt-2">{winner.score} points</p>
+        </div>
+      )}
+      <div className="max-w-md mx-auto space-y-3">
+        {standings.map((entry, index) => (
+          <div
+            key={entry.playerId}
+            className={`rounded-lg px-6 py-4 flex justify-between items-center ${
+              index === 0
+                ? 'bg-yellow-100 border-2 border-yellow-400'
+                : index === 1
+                ? 'bg-gray-100 border-2 border-gray-400'
+                : index === 2
+                ? 'bg-orange-100 border-2 border-orange-400'
+                : 'bg-white border border-gray-200'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl font-bold text-gray-500">
+                #{index + 1}
+              </span>
+              <span className="font-medium text-lg">{entry.playerName}</span>
+            </div>
+            <span className="text-xl font-bold text-purple-700">
+              {entry.score}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Renders the appropriate component based on game status
+ */
+function renderGameContent(
+  status: RoomStatus,
+  gameState: ReturnType<typeof useGameState>['gameState']
+) {
+  switch (status) {
+    case 'lobby':
+      return (
+        <HostLobbyPlaceholder
+          roomCode={gameState.roomCode || '------'}
+          players={gameState.players}
+        />
+      );
+
+    case 'countdown':
+      return <CountdownPlaceholder count={gameState.countdownValue} />;
+
+    case 'drawing':
+      return (
+        <QuestionDisplayPlaceholder
+          question={gameState.question || ''}
+          timerSeconds={gameState.timerSeconds}
+          submittedCount={gameState.submittedCount}
+          totalPlayers={gameState.players.length}
+          round={gameState.currentRound}
+          totalRounds={gameState.totalRounds}
+        />
+      );
+
+    case 'voting':
+      return (
+        <DrawingGalleryPlaceholder
+          drawings={gameState.drawings}
+          timerSeconds={gameState.timerSeconds}
+          players={gameState.players}
+        />
+      );
+
+    case 'results':
+      return (
+        <VotingResultsPlaceholder
+          winners={gameState.winners}
+          voteResults={gameState.voteResults}
+          round={gameState.currentRound}
+        />
+      );
+
+    case 'final':
+      return (
+        <LeaderboardPlaceholder
+          standings={gameState.finalStandings}
+          winner={gameState.finalWinner}
+        />
+      );
+
+    default:
+      return (
+        <div className="text-center text-gray-600">
+          Unknown game state: {status}
+        </div>
+      );
+  }
+}
+
+function HostScreen({ deviceId }: HostScreenProps) {
+  const { gameState, createRoom } = useGameState();
+
+  // Automatically create a room when the host screen mounts
+  useEffect(() => {
+    if (!gameState.inRoom) {
+      createRoom();
+    }
+  }, [gameState.inRoom, createRoom]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col">
+      {/* Header */}
+      <header className="py-4 px-6 flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-white drop-shadow-lg">
+          PartyDraw
+        </h1>
+        {gameState.inRoom && gameState.roomCode && (
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+            <span className="text-white font-medium">
+              Room: {gameState.roomCode}
+            </span>
+          </div>
+        )}
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center p-6">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 max-w-4xl w-full">
+          {/* Error display */}
+          {gameState.error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+              {gameState.error}
+            </div>
+          )}
+
+          {/* Loading state while room is being created */}
+          {!gameState.inRoom && !gameState.error && (
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mx-auto mb-4" />
+              <p className="text-lg text-gray-600">Creating room...</p>
+            </div>
+          )}
+
+          {/* Game content based on status */}
+          {gameState.inRoom && renderGameContent(gameState.status, gameState)}
+        </div>
+      </main>
+
+      {/* Footer with debug info */}
+      <footer className="py-2 px-6 text-center text-white/60 text-sm">
+        Device: {deviceId} | Status: {gameState.status}
+        {gameState.currentRound > 0 &&
+          ` | Round ${gameState.currentRound}/${gameState.totalRounds}`}
+      </footer>
     </div>
   );
 }
