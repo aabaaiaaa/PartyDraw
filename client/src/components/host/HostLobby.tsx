@@ -9,6 +9,7 @@
  */
 
 import { useMemo } from 'react';
+import QRCodeDisplay from './QRCodeDisplay';
 
 interface Player {
   id: string;
@@ -24,6 +25,8 @@ interface HostLobbyProps {
   players: Player[];
   /** Maximum number of players allowed (default: 8) */
   maxPlayers?: number;
+  /** Callback when the host clicks "Start Game" */
+  onStartGame?: () => void;
 }
 
 /**
@@ -34,23 +37,6 @@ function getRoomUrl(roomCode: string): string {
   return `${baseUrl}?room=${roomCode}`;
 }
 
-/**
- * Simple QR Code placeholder component
- * Will be replaced with actual QR code in TASK-030
- */
-function QRCodePlaceholder({ url }: { url: string }) {
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-lg inline-block">
-      <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border-4 border-dashed border-gray-300">
-        <div className="text-center p-4">
-          <div className="text-4xl mb-2">📱</div>
-          <p className="text-xs text-gray-500 break-all">{url}</p>
-        </div>
-      </div>
-      <p className="text-xs text-gray-400 mt-2 text-center">Scan to join</p>
-    </div>
-  );
-}
 
 /**
  * Player avatar showing the first letter of their name
@@ -144,11 +130,12 @@ function EmptyPlayerList() {
 /**
  * Main HostLobby component
  */
-function HostLobby({ roomCode, players, maxPlayers = 8 }: HostLobbyProps) {
+function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobbyProps) {
   const roomUrl = useMemo(() => getRoomUrl(roomCode), [roomCode]);
 
   const readyCount = players.filter((p) => p.isReady).length;
   const allReady = players.length > 0 && readyCount === players.length;
+  const canStart = allReady && players.length >= 2;
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -159,7 +146,7 @@ function HostLobby({ roomCode, players, maxPlayers = 8 }: HostLobbyProps) {
         </h2>
 
         {/* QR Code */}
-        <QRCodePlaceholder url={roomUrl} />
+        <QRCodeDisplay url={roomUrl} />
 
         {/* Room Code */}
         <div className="mt-6">
@@ -208,12 +195,24 @@ function HostLobby({ roomCode, players, maxPlayers = 8 }: HostLobbyProps) {
           </div>
         )}
 
-        {/* Status message */}
+        {/* Status message and Start Game button */}
         {players.length > 0 && (
           <div className="mt-6 text-center">
-            {allReady ? (
-              <p className="text-green-600 font-medium text-lg">
-                Everyone is ready! The host can start the game.
+            {canStart ? (
+              <>
+                <p className="text-green-600 font-medium text-lg mb-4">
+                  Everyone is ready!
+                </p>
+                <button
+                  onClick={onStartGame}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl text-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                >
+                  🎮 Start Game!
+                </button>
+              </>
+            ) : allReady ? (
+              <p className="text-yellow-600 font-medium text-lg">
+                Need at least 2 players to start
               </p>
             ) : (
               <p className="text-gray-500">
@@ -224,7 +223,7 @@ function HostLobby({ roomCode, players, maxPlayers = 8 }: HostLobbyProps) {
         )}
 
         {/* Minimum players notice */}
-        {players.length > 0 && players.length < 2 && (
+        {players.length > 0 && players.length < 2 && !canStart && (
           <p className="text-yellow-600 text-sm mt-2 text-center">
             At least 2 players are needed to start the game
           </p>

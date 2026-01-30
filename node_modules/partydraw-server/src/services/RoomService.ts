@@ -419,6 +419,127 @@ export class RoomService {
   }
 
   /**
+   * Marks a player as disconnected without removing them from the room
+   * @param socketId - Socket ID of the disconnected player
+   * @returns Result containing the room and player info, or an error
+   */
+  markPlayerDisconnected(
+    socketId: string
+  ): RoomResult<{ room: Room; playerId: string; player: Player }> {
+    const playerInfo = this.socketToPlayer.get(socketId);
+
+    if (!playerInfo) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found for this socket',
+      };
+    }
+
+    const { roomId, playerId } = playerInfo;
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      this.socketToPlayer.delete(socketId);
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room not found',
+      };
+    }
+
+    const player = room.players.get(playerId);
+
+    if (!player) {
+      this.socketToPlayer.delete(socketId);
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found in room',
+      };
+    }
+
+    // Mark player as disconnected
+    const updatedPlayer: Player = {
+      ...player,
+      isConnected: false,
+    };
+
+    // Update the room's player map
+    const newPlayers = new Map(room.players);
+    newPlayers.set(playerId, updatedPlayer);
+    const updatedRoom: Room = {
+      ...room,
+      players: newPlayers,
+    };
+
+    this.rooms.set(roomId, updatedRoom);
+
+    return {
+      success: true,
+      data: { room: updatedRoom, playerId, player: updatedPlayer },
+    };
+  }
+
+  /**
+   * Handles player reconnection by updating their socket ID and marking them as connected
+   * @param oldSocketId - The original socket ID
+   * @param newSocketId - The new socket ID after reconnection
+   * @returns Result containing the room and player info, or an error
+   */
+  reconnectPlayer(
+    roomId: string,
+    playerId: string,
+    newSocketId: string
+  ): RoomResult<{ room: Room; player: Player }> {
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room not found',
+      };
+    }
+
+    const player = room.players.get(playerId);
+
+    if (!player) {
+      return {
+        success: false,
+        error: 'PLAYER_NOT_FOUND',
+        message: 'Player not found in room',
+      };
+    }
+
+    // Update player with new socket ID and mark as connected
+    const updatedPlayer: Player = {
+      ...player,
+      socketId: newSocketId,
+      isConnected: true,
+      lastHeartbeat: Date.now(),
+    };
+
+    // Update the room's player map
+    const newPlayers = new Map(room.players);
+    newPlayers.set(playerId, updatedPlayer);
+    const updatedRoom: Room = {
+      ...room,
+      players: newPlayers,
+    };
+
+    this.rooms.set(roomId, updatedRoom);
+
+    // Update socket-to-player mapping
+    this.socketToPlayer.set(newSocketId, { roomId, playerId });
+
+    return {
+      success: true,
+      data: { room: updatedRoom, player: updatedPlayer },
+    };
+  }
+
+  /**
    * Gets all active rooms (for debugging/admin)
    * @returns Array of all active rooms
    */

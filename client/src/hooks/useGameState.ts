@@ -137,6 +137,8 @@ export interface GameState {
   votedCount: number;
   /** Whether current player has submitted drawing */
   hasSubmittedDrawing: boolean;
+  /** Whether the drawing phase has ended (timer expired) - triggers auto-submit */
+  drawingPhaseEnded: boolean;
   /** Whether current player has voted */
   hasVoted: boolean;
   /** Vote results for current round */
@@ -175,6 +177,7 @@ const initialGameState: GameState = {
   submittedCount: 0,
   votedCount: 0,
   hasSubmittedDrawing: false,
+  drawingPhaseEnded: false,
   hasVoted: false,
   voteResults: [],
   winners: [],
@@ -376,6 +379,7 @@ export function useGameState(): UseGameStateReturn {
         drawings: [],
         submittedCount: 0,
         hasSubmittedDrawing: false,
+        drawingPhaseEnded: false,
         hasVoted: false,
         votedCount: 0,
         voteResults: [],
@@ -410,9 +414,10 @@ export function useGameState(): UseGameStateReturn {
     };
 
     // Drawing phase ended (timer expired)
-    const handleDrawingPhaseEnded = (data: { reason: string }) => {
-      // The server will auto-submit remaining drawings
-      // and then emit round:voting-start
+    const handleDrawingPhaseEnded = (_data: { reason: string }) => {
+      // Signal that the drawing phase has ended - client should auto-submit
+      // The drawingPhaseEnded flag will trigger auto-submit in DrawingCanvas
+      updateState({ drawingPhaseEnded: true });
     };
 
     // ============ Voting Events ============

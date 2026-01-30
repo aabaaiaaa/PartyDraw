@@ -3,8 +3,7 @@ import './App.css';
 import { getDeviceParams } from './utils/deviceId';
 import HostScreen from './screens/HostScreen';
 import PlayerScreen from './screens/PlayerScreen';
-// TODO: Import ConsoleCapture when TASK-007 is complete
-// import { initConsoleCapture } from './utils/ConsoleCapture';
+import { initConsoleCapture } from './utils/ConsoleCapture';
 
 function App() {
   // Parse device parameters from URL to determine which screen to render
@@ -12,8 +11,7 @@ function App() {
 
   // Initialize ConsoleCapture on mount for TestBoardBed integration
   useEffect(() => {
-    // TODO: Initialize ConsoleCapture when TASK-007 is complete
-    // initConsoleCapture();
+    initConsoleCapture();
 
     // Log device info for debugging
     console.log('[PartyDraw] Device params:', deviceParams);

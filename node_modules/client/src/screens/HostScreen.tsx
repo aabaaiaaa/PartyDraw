@@ -17,122 +17,26 @@ import HostLobby from '../components/host/HostLobby';
 import Countdown from '../components/host/Countdown';
 import QuestionDisplay from '../components/host/QuestionDisplay';
 import DrawingGallery from '../components/host/DrawingGallery';
+import VotingResults from '../components/host/VotingResults';
+import Leaderboard from '../components/host/Leaderboard';
 
-// TODO: Import actual components when implemented (TASK-030, TASK-034 to TASK-035)
-// import VotingResults from '../components/host/VotingResults';
-// import Leaderboard from '../components/host/Leaderboard';
+// TODO: Import actual component when implemented (TASK-030)
+// import QRCodeDisplay from '../components/host/QRCodeDisplay';
 
 interface HostScreenProps {
   deviceId: string;
 }
 
 
-/**
- * Placeholder component for VotingResults (TASK-034)
- * Shows round winner and score breakdown
- */
-function VotingResultsPlaceholder({
-  winners,
-  voteResults,
-  round,
-}: {
-  winners: Array<{ playerId: string; playerName: string; votes: number }>;
-  voteResults: Array<{
-    playerId: string;
-    playerName: string;
-    votes: number;
-    pointsEarned: number;
-  }>;
-  round: number;
-}) {
-  return (
-    <div className="text-center">
-      <h2 className="text-3xl font-bold text-purple-800 mb-6">
-        Round {round} Results
-      </h2>
-      {winners.length > 0 && (
-        <div className="mb-8">
-          <p className="text-xl text-purple-600 mb-2">Winner</p>
-          <p className="text-4xl font-bold text-yellow-600">
-            🏆 {winners[0].playerName}
-          </p>
-          <p className="text-lg text-gray-600">{winners[0].votes} votes</p>
-        </div>
-      )}
-      <div className="space-y-2">
-        {voteResults.map((result) => (
-          <div
-            key={result.playerId}
-            className="bg-white rounded-lg px-4 py-3 flex justify-between items-center"
-          >
-            <span className="font-medium">{result.playerName}</span>
-            <span className="text-purple-700">
-              {result.votes} votes (+{result.pointsEarned} pts)
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
- * Placeholder component for Leaderboard (TASK-035)
- * Shows final standings with podium
- */
-function LeaderboardPlaceholder({
-  standings,
-  winner,
-}: {
-  standings: Array<{ playerId: string; playerName: string; score: number }>;
-  winner: { playerId: string; playerName: string; score: number } | null;
-}) {
-  return (
-    <div className="text-center">
-      <h2 className="text-4xl font-bold text-purple-800 mb-8">Final Results!</h2>
-      {winner && (
-        <div className="mb-8">
-          <p className="text-2xl text-yellow-600 mb-2">🎉 Winner 🎉</p>
-          <p className="text-5xl font-bold text-purple-700">{winner.playerName}</p>
-          <p className="text-2xl text-gray-600 mt-2">{winner.score} points</p>
-        </div>
-      )}
-      <div className="max-w-md mx-auto space-y-3">
-        {standings.map((entry, index) => (
-          <div
-            key={entry.playerId}
-            className={`rounded-lg px-6 py-4 flex justify-between items-center ${
-              index === 0
-                ? 'bg-yellow-100 border-2 border-yellow-400'
-                : index === 1
-                ? 'bg-gray-100 border-2 border-gray-400'
-                : index === 2
-                ? 'bg-orange-100 border-2 border-orange-400'
-                : 'bg-white border border-gray-200'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold text-gray-500">
-                #{index + 1}
-              </span>
-              <span className="font-medium text-lg">{entry.playerName}</span>
-            </div>
-            <span className="text-xl font-bold text-purple-700">
-              {entry.score}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /**
  * Renders the appropriate component based on game status
  */
 function renderGameContent(
   status: RoomStatus,
-  gameState: ReturnType<typeof useGameState>['gameState']
+  gameState: ReturnType<typeof useGameState>['gameState'],
+  onPlayAgain?: () => void,
+  onStartGame?: () => void
 ) {
   switch (status) {
     case 'lobby':
@@ -140,6 +44,7 @@ function renderGameContent(
         <HostLobby
           roomCode={gameState.roomCode || '------'}
           players={gameState.players}
+          onStartGame={onStartGame}
         />
       );
 
@@ -171,18 +76,23 @@ function renderGameContent(
 
     case 'results':
       return (
-        <VotingResultsPlaceholder
+        <VotingResults
           winners={gameState.winners}
           voteResults={gameState.voteResults}
           round={gameState.currentRound}
+          totalRounds={gameState.totalRounds}
+          drawings={gameState.drawings}
+          players={gameState.players}
         />
       );
 
     case 'final':
       return (
-        <LeaderboardPlaceholder
+        <Leaderboard
           standings={gameState.finalStandings}
           winner={gameState.finalWinner}
+          players={gameState.players}
+          onPlayAgain={onPlayAgain}
         />
       );
 
@@ -196,7 +106,7 @@ function renderGameContent(
 }
 
 function HostScreen({ deviceId }: HostScreenProps) {
-  const { gameState, createRoom } = useGameState();
+  const { gameState, createRoom, resetState, startGame } = useGameState();
 
   // Automatically create a room when the host screen mounts
   useEffect(() => {
@@ -204,6 +114,12 @@ function HostScreen({ deviceId }: HostScreenProps) {
       createRoom();
     }
   }, [gameState.inRoom, createRoom]);
+
+  // Handle play again - reset state and create new room
+  const handlePlayAgain = () => {
+    resetState();
+    // Room will be created automatically via the useEffect above
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col">
@@ -240,7 +156,7 @@ function HostScreen({ deviceId }: HostScreenProps) {
           )}
 
           {/* Game content based on status */}
-          {gameState.inRoom && renderGameContent(gameState.status, gameState)}
+          {gameState.inRoom && renderGameContent(gameState.status, gameState, handlePlayAgain, startGame)}
         </div>
       </main>
 

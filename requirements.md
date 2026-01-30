@@ -32,7 +32,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Install and configure Tailwind CSS in client. Set up party game color theme with vibrant colors (purples, pinks, yellows, teals).
 
 ### TASK-005: Install animation and audio libraries
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-003
 - **Description**: Install framer-motion for animations, howler for audio, and qrcode.react for QR code generation.
@@ -44,7 +44,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Configure Vite to run client on port 5175, server on port 3001. Set up CORS to allow cross-origin requests between them.
 
 ### TASK-007: Create TestBoardBed console integration
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-003
 - **Description**: Create `ConsoleCapture.ts` that intercepts console.log/warn/error and forwards them to parent window via postMessage for TestBoardBed integration.
@@ -102,13 +102,13 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `server/src/services/TimerService.ts` with server-authoritative timers that broadcast ticks to all clients. Methods: startCountdown(), startDrawingTimer(), startVotingTimer(), clearTimer().
 
 ### TASK-016: Create question bank
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-008
 - **Description**: Create `server/src/utils/questionBank.ts` with 20+ drawing prompts across categories (animals, actions, scenarios, objects). Include getRandomQuestions() function that avoids repeats.
 
 ### TASK-017: Implement ScoringService
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-014
 - **Description**: Create `server/src/services/ScoringService.ts` that calculates scores: 100 points per vote received, up to 50 points speed bonus (linear scale from 0-10 seconds), no bonus for auto-submitted drawings.
@@ -198,7 +198,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/components/host/HostLobby.tsx` that displays: large QR code with room URL, room code text, player list with avatars and ready indicators, "Waiting for players" message.
 
 ### TASK-030: Create QRCodeDisplay component
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-029
 - **Description**: Create `client/src/components/host/QRCodeDisplay.tsx` using qrcode.react to render scannable QR code for the room join URL.
@@ -222,13 +222,13 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/components/host/DrawingGallery.tsx` that displays all submitted drawings in a responsive grid during voting phase. Show player names under each drawing.
 
 ### TASK-034: Create VotingResults component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-028
 - **Description**: Create `client/src/components/host/VotingResults.tsx` that highlights winning drawing, shows vote counts, displays round score breakdown with animations.
 
 ### TASK-035: Create Leaderboard component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-028
 - **Description**: Create `client/src/components/host/Leaderboard.tsx` that shows final standings with podium animation (1st, 2nd, 3rd), confetti effect, scores, and "Play Again" button.
@@ -238,49 +238,49 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 6: Player Screen Components
 
 ### TASK-036: Create PlayerScreen container
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-027
 - **Description**: Create `client/src/screens/PlayerScreen.tsx` that renders different components based on game status: JoinScreen, NamePicker, WaitingScreen, DrawingCanvas, VotingInterface, or score display.
 
 ### TASK-037: Create JoinScreen component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-036
 - **Description**: Create `client/src/components/player/JoinScreen.tsx` with room code input field and Join button. Validate code format and show error messages.
 
 ### TASK-038: Create NamePicker component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-036
 - **Description**: Create `client/src/components/player/NamePicker.tsx` that displays auto-generated name with color avatar, "Generate New Name" button, custom name input field, and large "Ready!" button.
 
 ### TASK-039: Create WaitingScreen component
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-036
 - **Description**: Create `client/src/components/player/WaitingScreen.tsx` that shows "Waiting for host..." with animated dots, ready status of other players, and "Cancel Ready" option.
 
 ### TASK-040: Create DrawingCanvas component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-036
 - **Description**: Create `client/src/components/player/DrawingCanvas.tsx` with HTML5 canvas that supports touch and mouse input. Use pointer events for unified handling. Prevent scroll while drawing with touch-action: none.
 
 ### TASK-041: Create useCanvas hook
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-040
 - **Description**: Create `client/src/hooks/useCanvas.ts` with drawing logic: pointer event handlers, stroke rendering, color/size state, clear function, and captureDrawing() that exports canvas as base64 JPEG.
 
 ### TASK-042: Create DrawingControls component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-040
 - **Description**: Create `client/src/components/player/DrawingControls.tsx` with color palette (8 colors), brush size selector (3 sizes), eraser toggle, clear button, and Submit button.
 
 ### TASK-043: Create VotingInterface component
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-036
 - **Description**: Create `client/src/components/player/VotingInterface.tsx` that displays all drawings in scrollable grid. Tap to vote with visual feedback. Disable voting for own drawing. Show confirmation after voting.
@@ -290,13 +290,13 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 7: Game Flow Integration
 
 ### TASK-044: Implement auto-submit on timer expiry
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-021, TASK-040
 - **Description**: When drawing timer expires on server, auto-submit any drawings not yet submitted. Client should capture current canvas state and send when receiving round:drawing-phase-ended event.
 
 ### TASK-045: Implement player disconnect handling
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-018
 - **Description**: On socket disconnect, mark player as disconnected. After 10 seconds without reconnection, remove player from room. Notify other players via room:player-left event.
@@ -308,7 +308,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Allow players to join during a game. New players spectate until the next round starts, then can participate. Show "Waiting for next round" message.
 
 ### TASK-047: Implement localStorage leaderboard
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-035
 - **Description**: Create `client/src/utils/leaderboard.ts` that saves high scores to localStorage. Store player name, score, and date. Display top 10 scores on final leaderboard screen.
@@ -358,31 +358,31 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 9: Testing
 
 ### TASK-054: Set up testing infrastructure
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-002, TASK-003
 - **Description**: Install testing dependencies. Server: vitest, @types/node. Client: vitest, @testing-library/react, jsdom. Add test scripts to package.json files.
 
 ### TASK-055: Unit test ScoringService
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-017, TASK-054
 - **Description**: Test scoring calculations: votes give 100 points each, speed bonus scales linearly (50pts at 0s, 0pts at 10s), auto-submitted drawings get no speed bonus, handles edge cases (no votes, all votes to one player).
 
 ### TASK-056: Unit test TimerService
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-015, TASK-054
 - **Description**: Test timer behavior: countdown emits correct ticks, timer can be cleared, expired timer triggers callback, multiple timers for different rooms don't interfere.
 
 ### TASK-057: Unit test RoomService
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-013, TASK-054
 - **Description**: Test room lifecycle: create room generates unique code, join room adds player, leave room removes player, room closes when host leaves, max 8 players enforced.
 
 ### TASK-058: Unit test Game state machine
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-014, TASK-054
 - **Description**: Test state transitions: lobby → countdown requires all ready, drawing → voting on timer/all submitted, voting → results on timer/all voted, results → drawing or final based on round count.
@@ -400,25 +400,25 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Test question selection: getRandomQuestions returns requested count, excludes previously used questions, handles case where all questions used.
 
 ### TASK-061: Unit test useCanvas hook
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-041, TASK-054
 - **Description**: Test canvas functionality: drawing strokes renders to canvas, clear erases canvas, captureDrawing returns valid base64 data URL, color and size changes apply correctly.
 
 ### TASK-062: Integration test Socket room events
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-018, TASK-054
 - **Description**: Test Socket.IO room flow: client can create room and receive code, second client can join room, both clients receive player-joined event, leaving client triggers player-left event.
 
 ### TASK-063: Integration test Socket game events
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-020, TASK-021, TASK-022, TASK-054
 - **Description**: Test Socket.IO game flow: game:start triggers countdown, round:start includes question, drawing:submit updates count, vote:cast calculates results correctly, game:end shows final standings.
 
 ### TASK-064: E2E test full game flow
-- **Status**: pending
+- **Status**: done
 - **Priority**: high
 - **Dependencies**: TASK-044, TASK-054
 - **Description**: Create Playwright E2E test using TestBoardBed: host creates room, 2 players join, all mark ready, game starts, players submit drawings, players vote, results shown, repeat for 3 rounds, final leaderboard displays winner.
