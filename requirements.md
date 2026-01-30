@@ -348,7 +348,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Show connection status indicator. Display friendly error messages for: room not found, room full, connection lost. Add "Reconnecting..." overlay with retry button.
 
 ### TASK-053: Create common UI components
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-004
 - **Description**: Create reusable components in `client/src/components/common/`: Button (variants: primary, secondary), Timer (circular countdown), PlayerAvatar (colored circle with initial/emoji).
