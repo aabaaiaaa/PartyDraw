@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface CountdownProps {
   /** Current countdown value (3, 2, 1, 0) where 0 = GO! */
@@ -102,65 +103,160 @@ function Countdown({ count, onTick, onComplete }: CountdownProps) {
   const displayText = getDisplayText(count);
   const colors = getColorScheme(count);
 
+  // Animation variants for the countdown number
+  const numberVariants = {
+    initial: {
+      scale: 0,
+      rotate: -20,
+      opacity: 0,
+    },
+    animate: {
+      scale: 1,
+      rotate: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 300,
+        damping: 15,
+      },
+    },
+    exit: {
+      scale: 2,
+      opacity: 0,
+      transition: {
+        duration: 0.3,
+      },
+    },
+  };
+
+  // Animation variants for the container ring
+  const containerVariants = {
+    initial: {
+      scale: 0.5,
+      opacity: 0,
+    },
+    animate: {
+      scale: 1,
+      opacity: 1,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 200,
+        damping: 20,
+      },
+    },
+  };
+
+  // Pulse animation for the container
+  const pulseVariants = {
+    animate: {
+      scale: [1, 1.05, 1],
+      transition: {
+        duration: 0.8,
+        repeat: Infinity,
+        repeatType: 'reverse' as const,
+      },
+    },
+  };
+
+  // Expanding ring animation
+  const ringVariants = {
+    initial: {
+      scale: 1,
+      opacity: 0.6,
+    },
+    animate: {
+      scale: 1.8,
+      opacity: 0,
+      transition: {
+        duration: 0.8,
+        ease: 'easeOut' as const,
+      },
+    },
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[300px]">
       {/* "Get Ready!" header */}
-      <p
-        className="text-3xl font-bold text-purple-700 mb-8 animate-pulse"
-        style={{ animationDuration: '1s' }}
+      <motion.p
+        key={`header-${count}`}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-3xl font-bold text-purple-700 mb-8"
       >
-        {count > 0 ? 'Get Ready!' : 'Draw!'}
-      </p>
-
-      {/* Main countdown number/text */}
-      <div
-        key={animationKey}
-        className={`
-          relative flex items-center justify-center
-          w-64 h-64 rounded-full
-          bg-white/50 backdrop-blur-sm
-          ring-8 ${colors.ring}
-          shadow-2xl ${colors.glow}
-          countdown-pulse
-        `}
-      >
-        <span
-          className={`
-            text-[10rem] font-black leading-none
-            ${colors.text}
-            drop-shadow-lg
-            countdown-number
-          `}
-          style={{
-            textShadow: `0 0 60px currentColor, 0 0 100px currentColor`,
-          }}
+        <motion.span
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 1, repeat: Infinity }}
         >
-          {displayText}
-        </span>
-      </div>
+          {count > 0 ? 'Get Ready!' : 'Draw!'}
+        </motion.span>
+      </motion.p>
 
-      {/* Decorative animated rings */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div
-          key={`ring1-${animationKey}`}
+      {/* Main countdown container with pulse effect */}
+      <motion.div
+        key={`container-${animationKey}`}
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+        className="relative"
+      >
+        <motion.div
+          variants={pulseVariants}
+          animate="animate"
           className={`
-            absolute w-72 h-72 rounded-full
-            border-4 ${colors.ring.replace('ring-', 'border-')}
-            opacity-0
-            countdown-ring-expand
+            relative flex items-center justify-center
+            w-64 h-64 rounded-full
+            bg-white/50 backdrop-blur-sm
+            ring-8 ${colors.ring}
+            shadow-2xl ${colors.glow}
           `}
-        />
-        <div
-          key={`ring2-${animationKey}`}
-          className={`
-            absolute w-72 h-72 rounded-full
-            border-4 ${colors.ring.replace('ring-', 'border-')}
-            opacity-0
-            countdown-ring-expand
-          `}
-          style={{ animationDelay: '150ms' }}
-        />
-      </div>
+        >
+          {/* Animated number */}
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={`number-${count}`}
+              variants={numberVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className={`
+                text-[10rem] font-black leading-none
+                ${colors.text}
+                drop-shadow-lg
+              `}
+              style={{
+                textShadow: `0 0 60px currentColor, 0 0 100px currentColor`,
+              }}
+            >
+              {displayText}
+            </motion.span>
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Decorative animated rings */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <motion.div
+            key={`ring1-${animationKey}`}
+            variants={ringVariants}
+            initial="initial"
+            animate="animate"
+            className={`
+              absolute w-72 h-72 rounded-full
+              border-4 ${colors.ring.replace('ring-', 'border-')}
+            `}
+          />
+          <motion.div
+            key={`ring2-${animationKey}`}
+            variants={ringVariants}
+            initial="initial"
+            animate="animate"
+            transition={{ delay: 0.15 }}
+            className={`
+              absolute w-72 h-72 rounded-full
+              border-4 ${colors.ring.replace('ring-', 'border-')}
+            `}
+          />
+        </div>
+      </motion.div>
     </div>
   );
 }

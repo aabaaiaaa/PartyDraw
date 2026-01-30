@@ -9,6 +9,7 @@
  */
 
 import { useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import QRCodeDisplay from './QRCodeDisplay';
 
 interface Player {
@@ -82,12 +83,22 @@ function PlayerAvatar({
 }
 
 /**
- * Individual player card in the lobby
+ * Individual player card in the lobby with slide-in animation
  */
-function PlayerCard({ player }: { player: Player }) {
+function PlayerCard({ player, index }: { player: Player; index: number }) {
   return (
-    <div
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+    <motion.div
+      initial={{ opacity: 0, x: -50, scale: 0.8 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 50, scale: 0.8 }}
+      transition={{
+        type: 'spring',
+        stiffness: 300,
+        damping: 25,
+        delay: index * 0.1,
+      }}
+      layout
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-300 ${
         player.isReady
           ? 'bg-green-50 border-2 border-green-400 shadow-md shadow-green-100'
           : 'bg-gray-50 border-2 border-gray-200'
@@ -100,15 +111,28 @@ function PlayerCard({ player }: { player: Player }) {
       />
       <div className="flex-1">
         <p className="font-semibold text-gray-800">{player.name}</p>
-        <p
+        <motion.p
+          initial={false}
+          animate={player.isReady ? { scale: [1, 1.1, 1] } : {}}
+          transition={{ duration: 0.3 }}
           className={`text-sm ${
             player.isReady ? 'text-green-600' : 'text-gray-500'
           }`}
         >
           {player.isReady ? 'Ready!' : 'Getting ready...'}
-        </p>
+        </motion.p>
       </div>
-    </div>
+      {player.isReady && (
+        <motion.div
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+          className="text-green-500 text-xl"
+        >
+          ✓
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
 
@@ -185,42 +209,85 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
           )}
         </div>
 
-        {players.length === 0 ? (
-          <EmptyPlayerList />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {players.map((player) => (
-              <PlayerCard key={player.id} player={player} />
-            ))}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {players.length === 0 ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <EmptyPlayerList />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="player-list"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+            >
+              <AnimatePresence>
+                {players.map((player, index) => (
+                  <PlayerCard key={player.id} player={player} index={index} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Status message and Start Game button */}
-        {players.length > 0 && (
-          <div className="mt-6 text-center">
-            {canStart ? (
-              <>
-                <p className="text-green-600 font-medium text-lg mb-4">
-                  Everyone is ready!
-                </p>
-                <button
-                  onClick={onStartGame}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl text-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+        <AnimatePresence>
+          {players.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+              className="mt-6 text-center"
+            >
+              {canStart ? (
+                <>
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-green-600 font-medium text-lg mb-4"
+                  >
+                    Everyone is ready!
+                  </motion.p>
+                  <motion.button
+                    onClick={onStartGame}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-8 rounded-xl text-xl shadow-lg hover:shadow-xl"
+                  >
+                    🎮 Start Game!
+                  </motion.button>
+                </>
+              ) : allReady ? (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-yellow-600 font-medium text-lg"
                 >
-                  🎮 Start Game!
-                </button>
-              </>
-            ) : allReady ? (
-              <p className="text-yellow-600 font-medium text-lg">
-                Need at least 2 players to start
-              </p>
-            ) : (
-              <p className="text-gray-500">
-                Waiting for all players to press Ready...
-              </p>
-            )}
-          </div>
-        )}
+                  Need at least 2 players to start
+                </motion.p>
+              ) : (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-gray-500"
+                >
+                  Waiting for all players to press Ready...
+                </motion.p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Minimum players notice */}
         {players.length > 0 && players.length < 2 && !canStart && (

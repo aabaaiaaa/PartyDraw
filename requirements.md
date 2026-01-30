@@ -318,7 +318,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 ## Phase 8: Polish
 
 ### TASK-048: Add Framer Motion animations
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-028, TASK-036
 - **Description**: Add animations throughout: player list slide-in, countdown pulse, drawing gallery reveal, score popup floats, winner highlight bounce, leaderboard podium rise.

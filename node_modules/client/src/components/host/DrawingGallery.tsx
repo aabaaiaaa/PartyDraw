@@ -8,6 +8,7 @@
  * - Vote progress indicator
  */
 
+import { motion } from 'framer-motion';
 import { Player, Drawing } from '../../hooks/useGameState';
 
 interface DrawingGalleryProps {
@@ -117,80 +118,181 @@ function DrawingGallery({
     return players.find((p) => p.id === playerId);
   };
 
+  // Animation variants for the container
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  // Animation variants for each drawing card
+  const cardVariants = {
+    hidden: {
+      opacity: 0,
+      y: 50,
+      scale: 0.8,
+      rotateY: -15,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      rotateY: 0,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 200,
+        damping: 20,
+      },
+    },
+  };
+
+  // Timer pulse animation
+  const timerPulseVariants = {
+    pulse: {
+      scale: [1, 1.1, 1],
+      transition: {
+        duration: 0.5,
+        repeat: Infinity,
+      },
+    },
+    normal: {
+      scale: 1,
+    },
+  };
+
   return (
-    <div className="flex flex-col items-center justify-start min-h-[400px] py-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col items-center justify-start min-h-[400px] py-4"
+    >
       {/* Header with timer */}
-      <div className="text-center mb-6">
-        <h2 className="text-4xl md:text-5xl font-black text-purple-800 mb-2">
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center mb-6"
+      >
+        <motion.h2
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+          className="text-4xl md:text-5xl font-black text-purple-800 mb-2"
+        >
           Vote Now!
-        </h2>
+        </motion.h2>
         <p className="text-lg text-gray-600">
           Pick your favorite drawing
         </p>
-      </div>
+      </motion.div>
 
       {/* Timer */}
-      <div
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+        variants={timerPulseVariants}
+        whileInView={isLowTime ? 'pulse' : 'normal'}
         className={`
           flex items-center justify-center
           w-24 h-24 md:w-28 md:h-28 rounded-full
           ${timerColors.bg}
           ring-4 ${timerColors.ring}
           shadow-lg mb-6
-          transition-all duration-300
-          ${isLowTime ? 'animate-pulse' : ''}
+          transition-colors duration-300
         `}
       >
-        <span
+        <motion.span
+          key={timerSeconds}
+          initial={{ scale: 1.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.2 }}
           className={`
             text-4xl md:text-5xl font-black leading-none
             ${timerColors.text}
-            transition-colors duration-300
           `}
         >
           {timerSeconds !== null ? timerSeconds : '--'}
-        </span>
-      </div>
+        </motion.span>
+      </motion.div>
 
       {/* Voting progress */}
-      <div className="mb-6 text-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="mb-6 text-center"
+      >
         <span className="text-lg font-medium text-gray-600">
           {allVoted ? (
-            <span className="text-green-600">All votes in!</span>
+            <motion.span
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              className="text-green-600"
+            >
+              All votes in!
+            </motion.span>
           ) : (
             <>
-              <span className="text-purple-700 font-bold">{votedCount}</span>
+              <motion.span
+                key={votedCount}
+                initial={{ scale: 1.5 }}
+                animate={{ scale: 1 }}
+                className="text-purple-700 font-bold"
+              >
+                {votedCount}
+              </motion.span>
               <span className="text-gray-500"> of </span>
               <span className="text-purple-700 font-bold">{totalVoters}</span>
               <span className="text-gray-500"> voted</span>
             </>
           )}
         </span>
-      </div>
+      </motion.div>
 
-      {/* Drawings grid */}
-      <div className={`grid ${gridClasses} gap-4 md:gap-6 w-full max-w-5xl px-2`}>
+      {/* Drawings grid with staggered reveal animation */}
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className={`grid ${gridClasses} gap-4 md:gap-6 w-full max-w-5xl px-2`}
+      >
         {drawings.map((drawing, index) => {
           const player = getPlayer(drawing.playerId);
           const playerColor = getPlayerColor(player);
 
           return (
-            <div
+            <motion.div
               key={drawing.playerId}
+              variants={cardVariants}
               className="flex flex-col items-center group"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
               {/* Drawing card */}
-              <div
+              <motion.div
+                initial={{ rotateY: -90 }}
+                animate={{ rotateY: 0 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 150,
+                  damping: 20,
+                  delay: index * 0.15,
+                }}
                 className="
                   relative w-full aspect-square
                   bg-white rounded-xl shadow-lg
                   overflow-hidden
                   border-4 border-white
-                  transition-all duration-300
-                  group-hover:shadow-xl group-hover:scale-[1.02]
                 "
                 style={{
                   boxShadow: `0 4px 20px ${playerColor}40`,
+                  transformStyle: 'preserve-3d',
                 }}
               >
                 {/* Drawing image */}
@@ -202,7 +304,15 @@ function DrawingGallery({
                 />
 
                 {/* Number badge */}
-                <div
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 500,
+                    damping: 15,
+                    delay: index * 0.15 + 0.3,
+                  }}
                   className="
                     absolute top-2 left-2
                     w-8 h-8 rounded-full
@@ -213,32 +323,42 @@ function DrawingGallery({
                   style={{ backgroundColor: playerColor }}
                 >
                   {index + 1}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               {/* Player name */}
-              <div
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: index * 0.15 + 0.2,
+                }}
+                whileHover={{ scale: 1.05 }}
                 className="
                   mt-3 px-4 py-2 rounded-full
                   font-semibold text-lg
                   text-white
                   shadow-md
-                  transition-transform duration-200
-                  group-hover:scale-105
                 "
                 style={{ backgroundColor: playerColor }}
               >
                 {getPlayerName(drawing.playerId)}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Empty state */}
       {drawings.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-          <svg
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center py-12 text-gray-500"
+        >
+          <motion.svg
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
             className="w-16 h-16 mb-4 text-gray-400"
             fill="none"
             stroke="currentColor"
@@ -250,11 +370,11 @@ function DrawingGallery({
               strokeWidth={2}
               d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
-          </svg>
+          </motion.svg>
           <p className="text-xl">No drawings yet</p>
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

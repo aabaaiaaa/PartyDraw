@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ScoreEntry, Player } from '../../hooks/useGameState';
 import {
   getHighScores,
@@ -106,7 +107,7 @@ function Confetti({ active }: { active: boolean }) {
 }
 
 /**
- * Podium display for top 3 players
+ * Podium display for top 3 players with Framer Motion animations
  */
 function Podium({
   standings,
@@ -125,8 +126,8 @@ function Podium({
     {
       position: 2,
       player: second,
-      height: 'h-24',
-      delay: 'delay-300',
+      height: 96, // h-24 = 6rem = 96px
+      delay: 0.3,
       medal: '🥈',
       bgClass: 'bg-gray-300',
       order: 'order-1',
@@ -134,8 +135,8 @@ function Podium({
     {
       position: 1,
       player: first,
-      height: 'h-36',
-      delay: 'delay-500',
+      height: 144, // h-36 = 9rem = 144px
+      delay: 0.5,
       medal: '🥇',
       bgClass: 'bg-yellow-400',
       order: 'order-2',
@@ -143,13 +144,72 @@ function Podium({
     {
       position: 3,
       player: third,
-      height: 'h-16',
-      delay: 'delay-100',
+      height: 64, // h-16 = 4rem = 64px
+      delay: 0.1,
       medal: '🥉',
       bgClass: 'bg-orange-400',
       order: 'order-3',
     },
   ];
+
+  // Animation variants for podium block rising
+  const podiumRiseVariants = {
+    hidden: {
+      height: 0,
+      opacity: 0,
+    },
+    visible: (height: number) => ({
+      height,
+      opacity: 1,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 100,
+        damping: 15,
+        mass: 1,
+      },
+    }),
+  };
+
+  // Animation variants for player info dropping in
+  const playerInfoVariants = {
+    hidden: {
+      opacity: 0,
+      y: -30,
+      scale: 0.8,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 200,
+        damping: 15,
+      },
+    },
+  };
+
+  // Crown bounce animation
+  const crownVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: {
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: 'spring' as const,
+        stiffness: 300,
+        damping: 10,
+      },
+    },
+    bounce: {
+      y: [0, -10, 0],
+      transition: {
+        duration: 0.5,
+        repeat: Infinity,
+        repeatDelay: 0.5,
+      },
+    },
+  };
 
   return (
     <div className="flex items-end justify-center gap-4 md:gap-6 mb-8">
@@ -159,73 +219,109 @@ function Podium({
           className={`flex flex-col items-center ${order}`}
         >
           {/* Player info */}
-          {player && (
-            <div
-              className={`
-                flex flex-col items-center mb-3
-                transition-all duration-700 ease-out ${delay}
-                ${showPodium ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'}
-              `}
-            >
-              {/* Medal and crown for winner */}
-              <div className="relative">
-                {position === 1 && (
-                  <div
-                    className={`
-                      absolute -top-8 left-1/2 -translate-x-1/2
-                      text-4xl
-                      transition-all duration-500 ${delay}
-                      ${showPodium ? 'opacity-100 scale-100 animate-bounce' : 'opacity-0 scale-0'}
-                    `}
-                    style={{ animationDuration: '1.5s', animationIterationCount: '3' }}
+          <AnimatePresence>
+            {player && showPodium && (
+              <motion.div
+                variants={playerInfoVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{ delay: delay + 0.3 }}
+                className="flex flex-col items-center mb-3"
+              >
+                {/* Medal and crown for winner */}
+                <div className="relative">
+                  {position === 1 && (
+                    <motion.div
+                      variants={crownVariants}
+                      initial="hidden"
+                      animate={['visible', 'bounce']}
+                      transition={{ delay: delay + 0.5 }}
+                      className="absolute -top-8 left-1/2 -translate-x-1/2 text-4xl"
+                    >
+                      👑
+                    </motion.div>
+                  )}
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 400,
+                      damping: 10,
+                      delay: delay + 0.4,
+                    }}
+                    className="text-4xl md:text-5xl block"
                   >
-                    👑
-                  </div>
-                )}
-                <span className="text-4xl md:text-5xl">{medal}</span>
-              </div>
+                    {medal}
+                  </motion.span>
+                </div>
 
-              {/* Player name badge */}
-              <div
-                className="px-4 py-2 rounded-full text-white font-bold shadow-lg mt-2 text-center"
-                style={{
-                  backgroundColor: getPlayerColor(players, player.playerId),
-                  boxShadow: `0 4px 20px ${getPlayerColor(players, player.playerId)}60`,
-                }}
-              >
-                <span className="text-sm md:text-lg truncate max-w-[100px] md:max-w-[120px] block">
-                  {player.playerName}
-                </span>
-              </div>
+                {/* Player name badge */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 15,
+                    delay: delay + 0.5,
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  className="px-4 py-2 rounded-full text-white font-bold shadow-lg mt-2 text-center"
+                  style={{
+                    backgroundColor: getPlayerColor(players, player.playerId),
+                    boxShadow: `0 4px 20px ${getPlayerColor(players, player.playerId)}60`,
+                  }}
+                >
+                  <span className="text-sm md:text-lg truncate max-w-[100px] md:max-w-[120px] block">
+                    {player.playerName}
+                  </span>
+                </motion.div>
 
-              {/* Score */}
-              <div
-                className={`
-                  mt-2 font-bold text-purple-700
-                  transition-all duration-500 delay-700
-                  ${showPodium ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}
-                `}
-              >
-                <span className="text-lg md:text-2xl">{player.score}</span>
-                <span className="text-xs md:text-sm text-purple-500 ml-1">pts</span>
-              </div>
-            </div>
-          )}
+                {/* Score with pop animation */}
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 400,
+                    damping: 15,
+                    delay: delay + 0.7,
+                  }}
+                  className="mt-2 font-bold text-purple-700"
+                >
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: delay + 0.8 }}
+                    className="text-lg md:text-2xl"
+                  >
+                    {player.score}
+                  </motion.span>
+                  <span className="text-xs md:text-sm text-purple-500 ml-1">pts</span>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Podium block */}
-          <div
-            className={`
-              w-20 md:w-28 ${height} ${bgClass} rounded-t-lg
-              flex items-center justify-center
-              shadow-lg
-              transition-all duration-700 ease-out ${delay}
-              ${showPodium ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full'}
-              podium-rise
-            `}
-            style={{ transitionDelay: position === 1 ? '500ms' : position === 2 ? '300ms' : '100ms' }}
+          {/* Podium block with rising animation */}
+          <motion.div
+            variants={podiumRiseVariants}
+            initial="hidden"
+            animate={showPodium ? 'visible' : 'hidden'}
+            custom={height}
+            transition={{ delay }}
+            className={`w-20 md:w-28 ${bgClass} rounded-t-lg flex items-center justify-center shadow-lg overflow-hidden`}
           >
-            <span className="text-2xl md:text-4xl font-black text-white/80">{position}</span>
-          </div>
+            <motion.span
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ opacity: 0.8, scale: 1 }}
+              transition={{ delay: delay + 0.3 }}
+              className="text-2xl md:text-4xl font-black text-white"
+            >
+              {position}
+            </motion.span>
+          </motion.div>
         </div>
       ))}
     </div>
@@ -308,35 +404,59 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
   const remainingStandings = standings.slice(3);
 
   return (
-    <div className="relative flex flex-col items-center justify-start min-h-[500px] py-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="relative flex flex-col items-center justify-start min-h-[500px] py-4"
+    >
       {/* Confetti effect */}
       <Confetti active={showConfetti} />
 
-      {/* Title */}
-      <h2
-        className={`
-          text-4xl md:text-6xl font-black text-purple-800 mb-2
-          text-center
-          transition-all duration-700
-          ${showTitle ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-8 scale-90'}
-        `}
-      >
-        Final Results!
-      </h2>
+      {/* Title with dramatic entrance */}
+      <AnimatePresence>
+        {showTitle && (
+          <motion.h2
+            initial={{ opacity: 0, y: -50, scale: 0.5 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              type: 'spring',
+              stiffness: 200,
+              damping: 15,
+            }}
+            className="text-4xl md:text-6xl font-black text-purple-800 mb-2 text-center"
+          >
+            Final Results!
+          </motion.h2>
+        )}
+      </AnimatePresence>
 
       {/* Winner announcement */}
-      {winner && (
-        <p
-          className={`
-            text-xl md:text-2xl text-purple-600 mb-8 font-semibold
-            transition-all duration-500 delay-300
-            ${showTitle ? 'opacity-100' : 'opacity-0'}
-          `}
-        >
-          <span className="text-2xl md:text-3xl">🎉</span> {winner.playerName} wins!{' '}
-          <span className="text-2xl md:text-3xl">🎉</span>
-        </p>
-      )}
+      <AnimatePresence>
+        {winner && showTitle && (
+          <motion.p
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+            className="text-xl md:text-2xl text-purple-600 mb-8 font-semibold"
+          >
+            <motion.span
+              animate={{ rotate: [0, 15, -15, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+              className="inline-block text-2xl md:text-3xl"
+            >
+              🎉
+            </motion.span>{' '}
+            {winner.playerName} wins!{' '}
+            <motion.span
+              animate={{ rotate: [0, -15, 15, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+              className="inline-block text-2xl md:text-3xl"
+            >
+              🎉
+            </motion.span>
+          </motion.p>
+        )}
+      </AnimatePresence>
 
       {/* Podium for top 3 */}
       {standings.length > 0 && (
@@ -344,97 +464,134 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
       )}
 
       {/* Remaining standings (4th place and beyond) */}
-      {remainingStandings.length > 0 && (
-        <div
-          className={`
-            w-full max-w-md mt-4
-            transition-all duration-500
-            ${showStandings ? 'opacity-100' : 'opacity-0'}
-          `}
-        >
-          <h3 className="text-lg font-bold text-purple-700 mb-3 text-center">
-            Full Standings
-          </h3>
+      <AnimatePresence>
+        {remainingStandings.length > 0 && showStandings && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-md mt-4"
+          >
+            <motion.h3
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-lg font-bold text-purple-700 mb-3 text-center"
+            >
+              Full Standings
+            </motion.h3>
 
-          <div className="space-y-2">
-            {remainingStandings.map((entry, index) => {
-              const position = index + 4;
-              const playerColor = getPlayerColor(players, entry.playerId);
-              const isRevealed = index < revealedRows;
+            <div className="space-y-2">
+              {remainingStandings.map((entry, index) => {
+                const position = index + 4;
+                const playerColor = getPlayerColor(players, entry.playerId);
+                const isRevealed = index < revealedRows;
 
-              return (
-                <div
-                  key={entry.playerId}
-                  className={`
-                    flex items-center justify-between
-                    px-4 py-3 rounded-xl bg-white shadow-md
-                    transition-all duration-300
-                    ${isRevealed ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}
-                  `}
-                  style={{ transitionDelay: `${index * 100}ms` }}
-                >
-                  {/* Position and name */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
-                      {position}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: playerColor }}
-                      />
-                      <span className="font-semibold text-gray-800">
-                        {entry.playerName}
-                      </span>
-                    </div>
-                  </div>
+                return (
+                  <AnimatePresence key={entry.playerId}>
+                    {isRevealed && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -50, scale: 0.9 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 300,
+                          damping: 20,
+                          delay: index * 0.1,
+                        }}
+                        className="flex items-center justify-between px-4 py-3 rounded-xl bg-white shadow-md"
+                      >
+                        {/* Position and name */}
+                        <div className="flex items-center gap-3">
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: index * 0.1 + 0.1 }}
+                            className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold"
+                          >
+                            {position}
+                          </motion.div>
+                          <div className="flex items-center gap-2">
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: index * 0.1 + 0.15 }}
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: playerColor }}
+                            />
+                            <span className="font-semibold text-gray-800">
+                              {entry.playerName}
+                            </span>
+                          </div>
+                        </div>
 
-                  {/* Score */}
-                  <div
-                    className="px-3 py-1 rounded-full text-white font-bold"
-                    style={{ backgroundColor: playerColor }}
-                  >
-                    {entry.score} pts
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+                        {/* Score */}
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 400,
+                            damping: 15,
+                            delay: index * 0.1 + 0.2,
+                          }}
+                          whileHover={{ scale: 1.05 }}
+                          className="px-3 py-1 rounded-full text-white font-bold"
+                          style={{ backgroundColor: playerColor }}
+                        >
+                          {entry.score} pts
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Empty state */}
       {standings.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center text-gray-500 py-8"
+        >
           <p className="text-xl">No players to display</p>
-        </div>
+        </motion.div>
       )}
 
       {/* Play Again button */}
-      <button
-        onClick={handlePlayAgain}
-        className={`
-          mt-8 px-8 py-4 rounded-full
-          bg-gradient-to-r from-purple-600 to-pink-600
-          text-white text-xl font-bold
-          shadow-lg hover:shadow-xl
-          transform hover:scale-105
-          transition-all duration-300
-          ${showButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-        `}
-      >
-        🎮 Play Again!
-      </button>
+      <AnimatePresence>
+        {showButton && (
+          <motion.button
+            onClick={handlePlayAgain}
+            initial={{ opacity: 0, y: 50, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 15,
+            }}
+            className="mt-8 px-8 py-4 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xl font-bold shadow-lg hover:shadow-xl"
+          >
+            🎮 Play Again!
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* High Scores Section */}
-      {highScores.length > 0 && (
-        <div
-          className={`
-            w-full max-w-md mt-8 mb-4
-            transition-all duration-500
-            ${showHighScores ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-          `}
-        >
+      <AnimatePresence>
+        {highScores.length > 0 && showHighScores && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-md mt-8 mb-4"
+          >
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="text-2xl">🏆</span>
             <h3 className="text-xl font-bold text-purple-800">All-Time High Scores</h3>
@@ -507,9 +664,10 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
               })}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
-    </div>
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
