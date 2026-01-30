@@ -13,12 +13,14 @@
 
 import { useEffect } from 'react';
 import { useGameState, RoomStatus } from '../hooks/useGameState';
+import { useSocket } from '../hooks/useSocket';
 import HostLobby from '../components/host/HostLobby';
 import Countdown from '../components/host/Countdown';
 import QuestionDisplay from '../components/host/QuestionDisplay';
 import DrawingGallery from '../components/host/DrawingGallery';
 import VotingResults from '../components/host/VotingResults';
 import Leaderboard from '../components/host/Leaderboard';
+import { ConnectionStatus, ReconnectingOverlay, ErrorMessage } from '../components/common';
 
 // TODO: Import actual component when implemented (TASK-030)
 // import QRCodeDisplay from '../components/host/QRCodeDisplay';
@@ -106,14 +108,15 @@ function renderGameContent(
 }
 
 function HostScreen({ deviceId }: HostScreenProps) {
-  const { gameState, createRoom, resetState, startGame } = useGameState();
+  const { gameState, createRoom, resetState, startGame, clearError } = useGameState();
+  const { connectionState, connect } = useSocket();
 
   // Automatically create a room when the host screen mounts
   useEffect(() => {
-    if (!gameState.inRoom) {
+    if (!gameState.inRoom && connectionState === 'connected') {
       createRoom();
     }
-  }, [gameState.inRoom, createRoom]);
+  }, [gameState.inRoom, createRoom, connectionState]);
 
   // Handle play again - reset state and create new room
   const handlePlayAgain = () => {
@@ -123,6 +126,16 @@ function HostScreen({ deviceId }: HostScreenProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col">
+      {/* Connection status indicator */}
+      <ConnectionStatus connectionState={connectionState} position="top-right" />
+
+      {/* Reconnecting overlay - blocks interaction when connection is lost */}
+      <ReconnectingOverlay
+        connectionState={connectionState}
+        onRetry={connect}
+        maxAutoAttempts={5}
+      />
+
       {/* Header - scales for larger screens */}
       <header className="py-3 px-4 sm:py-4 sm:px-6 lg:py-5 lg:px-8 flex justify-between items-center">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white drop-shadow-lg">
@@ -140,18 +153,30 @@ function HostScreen({ deviceId }: HostScreenProps) {
       {/* Main Content - responsive padding and max-width for different screen sizes */}
       <main className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
         <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 lg:p-10 max-w-4xl lg:max-w-5xl xl:max-w-6xl w-full min-h-[60vh] md:min-h-[65vh] lg:min-h-[70vh] flex flex-col">
-          {/* Error display */}
+          {/* Friendly error message display */}
           {gameState.error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-4 sm:mb-6 text-sm sm:text-base">
-              {gameState.error}
+            <div className="mb-4 sm:mb-6">
+              <ErrorMessage
+                error={gameState.error}
+                onDismiss={clearError}
+                dismissible={true}
+              />
             </div>
           )}
 
           {/* Loading state while room is being created */}
-          {!gameState.inRoom && !gameState.error && (
+          {!gameState.inRoom && !gameState.error && connectionState === 'connected' && (
             <div className="text-center flex-1 flex flex-col items-center justify-center">
               <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 border-4 border-purple-600 border-t-transparent mx-auto mb-4" />
               <p className="text-base sm:text-lg lg:text-xl text-gray-600">Creating room...</p>
+            </div>
+          )}
+
+          {/* Waiting for connection */}
+          {!gameState.inRoom && !gameState.error && connectionState !== 'connected' && (
+            <div className="text-center flex-1 flex flex-col items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 border-4 border-purple-600 border-t-transparent mx-auto mb-4" />
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600">Connecting to server...</p>
             </div>
           )}
 

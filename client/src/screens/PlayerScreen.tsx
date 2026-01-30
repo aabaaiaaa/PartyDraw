@@ -12,11 +12,13 @@
  */
 
 import { useGameState, Player, VoteResult, ScoreEntry } from '../hooks/useGameState';
+import { useSocket } from '../hooks/useSocket';
 import JoinScreen from '../components/player/JoinScreen';
 import NamePicker from '../components/player/NamePicker';
 import WaitingScreen from '../components/player/WaitingScreen';
 import DrawingCanvas from '../components/player/DrawingCanvas';
 import VotingInterface from '../components/player/VotingInterface';
+import { ConnectionStatus, ReconnectingOverlay, ErrorMessage } from '../components/common';
 
 interface PlayerScreenProps {
   deviceId: string;
@@ -327,6 +329,8 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
     clearError,
   } = useGameState();
 
+  const { connectionState, connect } = useSocket();
+
   const actions = {
     joinRoom,
     updateName,
@@ -338,6 +342,16 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 flex flex-col">
+      {/* Connection status indicator */}
+      <ConnectionStatus connectionState={connectionState} position="top-right" />
+
+      {/* Reconnecting overlay - blocks interaction when connection is lost */}
+      <ReconnectingOverlay
+        connectionState={connectionState}
+        onRetry={connect}
+        maxAutoAttempts={5}
+      />
+
       {/* Header - compact for phones */}
       <header className="py-2 px-3 sm:py-3 sm:px-4 flex justify-between items-center flex-shrink-0">
         <h1 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg">
@@ -355,16 +369,14 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
       {/* Main Content - optimized for phone screens with safe area padding */}
       <main className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
         <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-md w-full max-h-full overflow-y-auto">
-          {/* Dismissible error display */}
+          {/* Friendly error message display */}
           {gameState.error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-2 py-1.5 sm:px-3 sm:py-2 rounded mb-3 sm:mb-4 flex items-center justify-between">
-              <span className="text-xs sm:text-sm">{gameState.error}</span>
-              <button
-                onClick={clearError}
-                className="text-red-700 hover:text-red-900 ml-2 text-lg leading-none"
-              >
-                ×
-              </button>
+            <div className="mb-3 sm:mb-4">
+              <ErrorMessage
+                error={gameState.error}
+                onDismiss={clearError}
+                dismissible={true}
+              />
             </div>
           )}
 
