@@ -324,7 +324,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Add animations throughout: player list slide-in, countdown pulse, drawing gallery reveal, score popup floats, winner highlight bounce, leaderboard podium rise.
 
 ### TASK-049: Add sound effects
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-005
 - **Description**: Create `client/src/hooks/useAudio.ts` using Howler.js. Add sounds for: countdown ticks, round start, drawing submit, vote cast, round winner, game winner. Preload audio files.
