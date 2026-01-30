@@ -4,7 +4,7 @@
 - **Total Tasks**: 66
 - **Completed**: 60
 - **Remaining**: 6
-- **Last Updated**: 2026-01-30T21:27:19.289Z
+- **Last Updated**: 2026-01-30T22:48:21.270Z
 
 ## Iteration Log
 
@@ -327,7 +327,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Failed: Command failed: claude -p - --dangerously-skip-permissions --output-format json --add-dir "C:\Users\jeastaugh\source\repos\Experiments\PartyDraw" < "C:\Users\JEASTA~1\AppData\Local\Temp\devloop-prompt-1769289138317.txt"
 - **Duration**: 8s
 - **Exit Status**: error
-- **Tokens**: 0 total (0 in, 0 out)
+- **Tokens**: 0 total (0 in, 0 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.0000
 - **Error Type**: rate_limit
 - **Error Detail**:
@@ -342,7 +342,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Create TestBoardBed console integration
 - **Duration**: 264s
 - **Exit Status**: success
-- **Tokens**: 34,792 total (592 in, 4,567 out)
+- **Tokens**: 34,792 total (592 in, 4,567 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.5612
 
 ### Iteration 53 - 2026-01-30T10:29:49.148Z
@@ -350,7 +350,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Create question bank
 - **Duration**: 154s
 - **Exit Status**: success
-- **Tokens**: 29,757 total (8 in, 3,062 out)
+- **Tokens**: 29,757 total (8 in, 3,062 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.3370
 
 ### Iteration 54 - 2026-01-30T10:32:38.659Z
@@ -358,7 +358,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Implement ScoringService
 - **Duration**: 264s
 - **Exit Status**: success
-- **Tokens**: 55,435 total (3,046 in, 4,316 out)
+- **Tokens**: 55,435 total (3,046 in, 4,316 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.6429
 
 ### Iteration 55 - 2026-01-30T10:37:13.467Z
@@ -366,7 +366,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Unit test ScoringService
 - **Duration**: 513s
 - **Exit Status**: success
-- **Tokens**: 51,601 total (15 in, 9,459 out)
+- **Tokens**: 51,601 total (15 in, 9,459 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.7957
 
 ### Iteration 56 - 2026-01-30T13:24:16.027Z
@@ -374,7 +374,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Create QRCodeDisplay component
 - **Duration**: 194s
 - **Exit Status**: success
-- **Tokens**: 36,437 total (17 in, 3,601 out)
+- **Tokens**: 36,437 total (17 in, 3,601 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.5978
 
 ### Iteration 57 - 2026-01-30T13:57:43.853Z
@@ -382,7 +382,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Create WaitingScreen component
 - **Duration**: 274s
 - **Exit Status**: success
-- **Tokens**: 54,122 total (5,157 in, 6,074 out)
+- **Tokens**: 54,122 total (5,157 in, 6,074 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.8890
 
 ### Iteration 58 - 2026-01-30T14:38:22.974Z
@@ -390,7 +390,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Implement player disconnect handling
 - **Duration**: 398s
 - **Exit Status**: success
-- **Tokens**: 58,267 total (20 in, 7,618 out)
+- **Tokens**: 58,267 total (20 in, 7,618 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.9936
 
 ### Iteration 59 - 2026-01-30T14:51:39.844Z
@@ -398,7 +398,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Implement localStorage leaderboard
 - **Duration**: 338s
 - **Exit Status**: success
-- **Tokens**: 52,937 total (17 in, 6,327 out)
+- **Tokens**: 52,937 total (17 in, 6,327 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.7794
 
 ### Iteration 60 - 2026-01-30T15:11:56.834Z
@@ -406,7 +406,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Add Framer Motion animations
 - **Duration**: 1028s
 - **Exit Status**: success
-- **Tokens**: 111,152 total (43 in, 32,077 out)
+- **Tokens**: 111,152 total (43 in, 32,077 out, 0 cache-create, 0 cache-read)
 - **Cost**: $2.7392
 
 ### Iteration 61 - 2026-01-30T20:40:01.245Z
@@ -414,7 +414,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Add sound effects
 - **Duration**: 409s
 - **Exit Status**: success
-- **Tokens**: 46,772 total (789 in, 8,991 out)
+- **Tokens**: 46,772 total (789 in, 8,991 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.8123
 
 ### Iteration 62 - 2026-01-30T20:46:59.341Z
@@ -422,7 +422,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Implement responsive design
 - **Duration**: 1420s
 - **Exit Status**: success
-- **Tokens**: 176,058 total (47 in, 52,025 out)
+- **Tokens**: 176,058 total (47 in, 52,025 out, 0 cache-create, 0 cache-read)
 - **Cost**: $4.3089
 
 ### Iteration 63 - 2026-01-30T21:10:44.338Z
@@ -430,7 +430,7 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Add error handling and reconnection UX
 - **Duration**: 533s
 - **Exit Status**: success
-- **Tokens**: 76,276 total (27 in, 15,379 out)
+- **Tokens**: 76,276 total (27 in, 15,379 out, 0 cache-create, 0 cache-read)
 - **Cost**: $1.5023
 
 ### Iteration 64 - 2026-01-30T21:19:44.499Z
@@ -438,6 +438,17 @@ API Error: 400 {"type":"error","error":{"type":"invalid_request_error","message"
 - **Summary**: Completed Create common UI components
 - **Duration**: 455s
 - **Exit Status**: success
-- **Tokens**: 49,111 total (22 in, 8,239 out)
+- **Tokens**: 49,111 total (22 in, 8,239 out, 0 cache-create, 0 cache-read)
 - **Cost**: $0.9186
+
+### Iteration 65 - 2026-01-30T22:48:16.169Z
+- **Task Completed**: none
+- **Summary**: Failed: Error: When using --print, --output-format=stream-json requires --verbose
+- **Duration**: 5s
+- **Exit Status**: error
+- **Error Type**: task_failure
+- **Error Detail**:
+```
+Error: When using --print, --output-format=stream-json requires --verbose
+```
 
