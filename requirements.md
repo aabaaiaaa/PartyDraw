@@ -336,7 +336,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/components/common/Confetti.tsx` that displays confetti particle animation on final leaderboard and round winner screens.
 
 ### TASK-051: Implement responsive design
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-028, TASK-036
 - **Description**: Ensure host screen works on tablets/TVs and player screen works on phones. Use Tailwind responsive classes. Test with TestBoardBed phone/tablet viewports.

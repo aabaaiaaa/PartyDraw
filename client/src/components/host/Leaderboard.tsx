@@ -212,7 +212,7 @@ function Podium({
   };
 
   return (
-    <div className="flex items-end justify-center gap-4 md:gap-6 mb-8">
+    <div className="flex items-end justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8 mb-4 sm:mb-8">
       {podiumData.map(({ position, player, height, delay, medal, bgClass, order }) => (
         <div
           key={position}
@@ -226,7 +226,7 @@ function Podium({
                 initial="hidden"
                 animate="visible"
                 transition={{ delay: delay + 0.3 }}
-                className="flex flex-col items-center mb-3"
+                className="flex flex-col items-center mb-2 sm:mb-3"
               >
                 {/* Medal and crown for winner */}
                 <div className="relative">
@@ -236,7 +236,7 @@ function Podium({
                       initial="hidden"
                       animate={['visible', 'bounce']}
                       transition={{ delay: delay + 0.5 }}
-                      className="absolute -top-8 left-1/2 -translate-x-1/2 text-4xl"
+                      className="absolute -top-5 sm:-top-8 lg:-top-10 left-1/2 -translate-x-1/2 text-2xl sm:text-4xl lg:text-5xl"
                     >
                       👑
                     </motion.div>
@@ -250,7 +250,7 @@ function Podium({
                       damping: 10,
                       delay: delay + 0.4,
                     }}
-                    className="text-4xl md:text-5xl block"
+                    className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl block"
                   >
                     {medal}
                   </motion.span>
@@ -267,13 +267,13 @@ function Podium({
                     delay: delay + 0.5,
                   }}
                   whileHover={{ scale: 1.05 }}
-                  className="px-4 py-2 rounded-full text-white font-bold shadow-lg mt-2 text-center"
+                  className="px-2 py-1 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5 rounded-full text-white font-bold shadow-lg mt-1 sm:mt-2 text-center"
                   style={{
                     backgroundColor: getPlayerColor(players, player.playerId),
                     boxShadow: `0 4px 20px ${getPlayerColor(players, player.playerId)}60`,
                   }}
                 >
-                  <span className="text-sm md:text-lg truncate max-w-[100px] md:max-w-[120px] block">
+                  <span className="text-xs sm:text-sm md:text-lg lg:text-xl truncate max-w-[70px] sm:max-w-[100px] md:max-w-[120px] lg:max-w-[150px] block">
                     {player.playerName}
                   </span>
                 </motion.div>
@@ -288,17 +288,17 @@ function Podium({
                     damping: 15,
                     delay: delay + 0.7,
                   }}
-                  className="mt-2 font-bold text-purple-700"
+                  className="mt-1 sm:mt-2 font-bold text-purple-700"
                 >
                   <motion.span
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: delay + 0.8 }}
-                    className="text-lg md:text-2xl"
+                    className="text-sm sm:text-lg md:text-2xl lg:text-3xl"
                   >
                     {player.score}
                   </motion.span>
-                  <span className="text-xs md:text-sm text-purple-500 ml-1">pts</span>
+                  <span className="text-xs sm:text-sm lg:text-base text-purple-500 ml-1">pts</span>
                 </motion.div>
               </motion.div>
             )}
@@ -311,13 +311,13 @@ function Podium({
             animate={showPodium ? 'visible' : 'hidden'}
             custom={height}
             transition={{ delay }}
-            className={`w-20 md:w-28 ${bgClass} rounded-t-lg flex items-center justify-center shadow-lg overflow-hidden`}
+            className={`w-16 sm:w-20 md:w-28 lg:w-32 ${bgClass} rounded-t-lg flex items-center justify-center shadow-lg overflow-hidden`}
           >
             <motion.span
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 0.8, scale: 1 }}
               transition={{ delay: delay + 0.3 }}
-              className="text-2xl md:text-4xl font-black text-white"
+              className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-black text-white"
             >
               {position}
             </motion.span>
@@ -407,7 +407,7 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative flex flex-col items-center justify-start min-h-[500px] py-4"
+      className="relative flex flex-col items-center justify-start min-h-[400px] sm:min-h-[500px] lg:min-h-[550px] py-2 sm:py-4"
     >
       {/* Confetti effect */}
       <Confetti active={showConfetti} />
@@ -423,7 +423,7 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
               stiffness: 200,
               damping: 15,
             }}
-            className="text-4xl md:text-6xl font-black text-purple-800 mb-2 text-center"
+            className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-purple-800 mb-1 sm:mb-2 text-center"
           >
             Final Results!
           </motion.h2>
@@ -437,12 +437,12 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-            className="text-xl md:text-2xl text-purple-600 mb-8 font-semibold"
+            className="text-base sm:text-xl md:text-2xl lg:text-3xl text-purple-600 mb-4 sm:mb-8 font-semibold"
           >
             <motion.span
               animate={{ rotate: [0, 15, -15, 0] }}
               transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
-              className="inline-block text-2xl md:text-3xl"
+              className="inline-block text-xl sm:text-2xl md:text-3xl lg:text-4xl"
             >
               🎉
             </motion.span>{' '}
@@ -450,7 +450,7 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
             <motion.span
               animate={{ rotate: [0, -15, 15, 0] }}
               transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
-              className="inline-block text-2xl md:text-3xl"
+              className="inline-block text-xl sm:text-2xl md:text-3xl lg:text-4xl"
             >
               🎉
             </motion.span>
@@ -576,7 +576,7 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
               stiffness: 300,
               damping: 15,
             }}
-            className="mt-8 px-8 py-4 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xl font-bold shadow-lg hover:shadow-xl"
+            className="mt-4 sm:mt-8 px-6 py-3 sm:px-8 sm:py-4 lg:px-10 lg:py-5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg sm:text-xl lg:text-2xl font-bold shadow-lg hover:shadow-xl"
           >
             🎮 Play Again!
           </motion.button>
@@ -590,12 +590,12 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="w-full max-w-md mt-8 mb-4"
+            className="w-full max-w-sm sm:max-w-md lg:max-w-lg mt-4 sm:mt-8 mb-2 sm:mb-4 px-2"
           >
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="text-2xl">🏆</span>
-            <h3 className="text-xl font-bold text-purple-800">All-Time High Scores</h3>
-            <span className="text-2xl">🏆</span>
+          <div className="flex items-center justify-center gap-2 mb-2 sm:mb-4">
+            <span className="text-xl sm:text-2xl lg:text-3xl">🏆</span>
+            <h3 className="text-base sm:text-xl lg:text-2xl font-bold text-purple-800">All-Time High Scores</h3>
+            <span className="text-xl sm:text-2xl lg:text-3xl">🏆</span>
           </div>
 
           {newHighScoreCount > 0 && (

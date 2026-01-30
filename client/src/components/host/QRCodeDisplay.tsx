@@ -22,6 +22,7 @@ interface QRCodeDisplayProps {
 
 /**
  * QRCodeDisplay component - Displays a scannable QR code for room joining
+ * Responsive sizing for different screen sizes
  */
 function QRCodeDisplay({
   url,
@@ -30,31 +31,82 @@ function QRCodeDisplay({
   fgColor = '#4c1d95', // Purple-900 to match party theme
   includeIcon = false,
 }: QRCodeDisplayProps) {
+  // Responsive QR code sizing based on viewport
+  // Default size is passed but we use CSS to handle responsive display
   return (
-    <div className="bg-white p-4 rounded-xl shadow-lg inline-block">
-      <div className="rounded-lg overflow-hidden">
-        <QRCodeSVG
-          value={url}
-          size={size}
-          bgColor={bgColor}
-          fgColor={fgColor}
-          level="M" // Medium error correction - good balance of density and reliability
-          marginSize={2}
-          imageSettings={
-            includeIcon
-              ? {
-                  src: '/logo.png',
-                  x: undefined, // Center automatically
-                  y: undefined, // Center automatically
-                  height: 32,
-                  width: 32,
-                  excavate: true, // Clear space behind the image
-                }
-              : undefined
-          }
-        />
+    <div className="bg-white p-2 sm:p-3 lg:p-4 rounded-lg sm:rounded-xl shadow-lg inline-block">
+      <div className="rounded sm:rounded-lg overflow-hidden">
+        {/* Small screens (phones/small tablets) */}
+        <div className="block sm:hidden">
+          <QRCodeSVG
+            value={url}
+            size={140}
+            bgColor={bgColor}
+            fgColor={fgColor}
+            level="M"
+            marginSize={2}
+            imageSettings={
+              includeIcon
+                ? {
+                    src: '/logo.png',
+                    x: undefined,
+                    y: undefined,
+                    height: 24,
+                    width: 24,
+                    excavate: true,
+                  }
+                : undefined
+            }
+          />
+        </div>
+        {/* Medium screens (tablets) */}
+        <div className="hidden sm:block lg:hidden">
+          <QRCodeSVG
+            value={url}
+            size={size}
+            bgColor={bgColor}
+            fgColor={fgColor}
+            level="M"
+            marginSize={2}
+            imageSettings={
+              includeIcon
+                ? {
+                    src: '/logo.png',
+                    x: undefined,
+                    y: undefined,
+                    height: 32,
+                    width: 32,
+                    excavate: true,
+                  }
+                : undefined
+            }
+          />
+        </div>
+        {/* Large screens (TVs/large tablets) */}
+        <div className="hidden lg:block">
+          <QRCodeSVG
+            value={url}
+            size={256}
+            bgColor={bgColor}
+            fgColor={fgColor}
+            level="M"
+            marginSize={2}
+            imageSettings={
+              includeIcon
+                ? {
+                    src: '/logo.png',
+                    x: undefined,
+                    y: undefined,
+                    height: 40,
+                    width: 40,
+                    excavate: true,
+                  }
+                : undefined
+            }
+          />
+        </div>
       </div>
-      <p className="text-xs text-gray-400 mt-2 text-center">Scan to join</p>
+      <p className="text-[10px] sm:text-xs lg:text-sm text-gray-400 mt-1.5 sm:mt-2 text-center">Scan to join</p>
     </div>
   );
 }

@@ -92,29 +92,29 @@ function QuestionDisplay({
   const allSubmitted = submittedCount === totalPlayers && totalPlayers > 0;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] py-8">
+    <div className="flex flex-col items-center justify-center min-h-[300px] sm:min-h-[400px] lg:min-h-[500px] py-4 sm:py-6 lg:py-8">
       {/* Round indicator */}
-      <div className="mb-4">
-        <span className="inline-block px-4 py-1 bg-purple-100 text-purple-700 rounded-full text-lg font-semibold">
+      <div className="mb-3 sm:mb-4">
+        <span className="inline-block px-3 py-1 sm:px-4 sm:py-1.5 lg:px-5 lg:py-2 bg-purple-100 text-purple-700 rounded-full text-sm sm:text-lg lg:text-xl font-semibold">
           Round {round} of {totalRounds}
         </span>
       </div>
 
       {/* Question prompt */}
-      <div className="text-center mb-8">
-        <p className="text-xl text-gray-500 mb-2">Draw:</p>
-        <h2 className="text-5xl md:text-6xl font-black text-purple-800 tracking-tight">
+      <div className="text-center mb-4 sm:mb-6 lg:mb-8">
+        <p className="text-base sm:text-xl lg:text-2xl text-gray-500 mb-1 sm:mb-2">Draw:</p>
+        <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-purple-800 tracking-tight px-2">
           {question || 'Loading...'}
         </h2>
       </div>
 
-      {/* Large circular timer */}
+      {/* Large circular timer - scales for different screen sizes */}
       <div
         className={`
           relative flex items-center justify-center
-          w-48 h-48 md:w-56 md:h-56 rounded-full
+          w-36 h-36 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 xl:w-72 xl:h-72 rounded-full
           ${timerColors.bg}
-          ring-8 ${timerColors.ring}
+          ring-4 sm:ring-6 lg:ring-8 ${timerColors.ring}
           shadow-xl
           transition-all duration-300
           ${isLowTime ? 'animate-pulse' : ''}
@@ -122,7 +122,7 @@ function QuestionDisplay({
       >
         <span
           className={`
-            text-7xl md:text-8xl font-black leading-none
+            text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-none
             ${timerColors.text}
             transition-colors duration-300
           `}
@@ -134,29 +134,29 @@ function QuestionDisplay({
         </span>
 
         {/* Seconds label */}
-        <span className="absolute bottom-4 text-sm font-medium text-gray-500">
+        <span className="absolute bottom-3 sm:bottom-4 lg:bottom-5 text-xs sm:text-sm lg:text-base font-medium text-gray-500">
           seconds
         </span>
       </div>
 
       {/* Submission progress */}
-      <div className="mt-8 w-full max-w-md">
+      <div className="mt-4 sm:mt-6 lg:mt-8 w-full max-w-sm sm:max-w-md lg:max-w-lg px-4">
         {/* Progress text */}
         <div className="flex justify-between items-center mb-2">
-          <span className="text-lg font-medium text-gray-600">
+          <span className="text-sm sm:text-lg lg:text-xl font-medium text-gray-600">
             {allSubmitted ? (
               <span className="text-green-600">All drawings submitted!</span>
             ) : (
               'Players drawing...'
             )}
           </span>
-          <span className="text-xl font-bold text-purple-700">
+          <span className="text-base sm:text-xl lg:text-2xl font-bold text-purple-700">
             {submittedCount} / {totalPlayers}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+        <div className="w-full h-3 sm:h-4 lg:h-5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
           <div
             className={`h-full ${progressColor} transition-all duration-500 ease-out rounded-full`}
             style={{ width: `${progressPercentage}%` }}
@@ -164,12 +164,12 @@ function QuestionDisplay({
         </div>
 
         {/* Individual player indicators */}
-        <div className="flex justify-center gap-2 mt-4">
+        <div className="flex justify-center gap-1.5 sm:gap-2 lg:gap-3 mt-3 sm:mt-4">
           {Array.from({ length: totalPlayers }).map((_, index) => (
             <div
               key={index}
               className={`
-                w-4 h-4 rounded-full transition-all duration-300
+                w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 rounded-full transition-all duration-300
                 ${index < submittedCount
                   ? 'bg-green-500 scale-100'
                   : 'bg-gray-300 scale-90'}

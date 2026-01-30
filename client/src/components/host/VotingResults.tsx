@@ -169,16 +169,16 @@ function VotingResults({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-start min-h-[400px] py-4"
+      className="flex flex-col items-center justify-start min-h-[300px] sm:min-h-[400px] lg:min-h-[450px] py-2 sm:py-4"
     >
       {/* Round indicator */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mb-4"
+        className="mb-2 sm:mb-4"
       >
-        <span className="text-lg font-medium text-gray-500">
+        <span className="text-sm sm:text-lg lg:text-xl font-medium text-gray-500">
           Round {round} of {totalRounds}
         </span>
       </motion.div>
@@ -190,7 +190,7 @@ function VotingResults({
             initial={{ opacity: 0, y: -30, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="text-4xl md:text-5xl font-black text-purple-800 mb-6"
+            className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-purple-800 mb-3 sm:mb-6"
           >
             {isTie ? "It's a Tie!" : 'Round Winner!'}
           </motion.h2>
@@ -204,16 +204,16 @@ function VotingResults({
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 150, damping: 15, delay: 0.2 }}
-            className="flex flex-col items-center mb-8"
+            className="flex flex-col items-center mb-4 sm:mb-8"
           >
             {/* Trophy animation */}
-            <div className="relative mb-4">
+            <div className="relative mb-2 sm:mb-4">
               {/* Trophy icon with bounce */}
               <motion.div
                 variants={winnerBounceVariants}
                 initial="initial"
                 animate={['animate', 'bounce']}
-                className="text-7xl md:text-8xl"
+                className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl"
               >
                 🏆
               </motion.div>
@@ -240,7 +240,7 @@ function VotingResults({
             </div>
 
             {/* Winner name */}
-            <div className="text-center mb-4">
+            <div className="text-center mb-2 sm:mb-4">
               {isTie ? (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -254,7 +254,7 @@ function VotingResults({
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
                       whileHover={{ scale: 1.05 }}
-                      className="text-3xl md:text-4xl font-black px-4 py-2 rounded-full text-white shadow-lg"
+                      className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-black px-3 py-1 sm:px-4 sm:py-2 rounded-full text-white shadow-lg"
                       style={{ backgroundColor: getPlayerColor(players, w.playerId) }}
                     >
                       {w.playerName}
@@ -267,7 +267,7 @@ function VotingResults({
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.3 }}
-                  className="text-4xl md:text-5xl font-black px-6 py-3 rounded-full text-white shadow-lg inline-block"
+                  className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black px-4 py-2 sm:px-6 sm:py-3 rounded-full text-white shadow-lg inline-block"
                   style={{
                     backgroundColor: getPlayerColor(players, primaryWinner.playerId),
                     boxShadow: `0 8px 30px ${getPlayerColor(players, primaryWinner.playerId)}60`,
@@ -280,7 +280,7 @@ function VotingResults({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="text-xl text-purple-600 mt-3 font-semibold"
+                className="text-base sm:text-xl lg:text-2xl text-purple-600 mt-2 sm:mt-3 font-semibold"
               >
                 {primaryWinner.votes} vote{primaryWinner.votes !== 1 ? 's' : ''}
               </motion.p>
@@ -309,10 +309,10 @@ function VotingResults({
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                   className="
-                    w-48 h-48 md:w-64 md:h-64
-                    bg-white rounded-2xl shadow-2xl
+                    w-36 h-36 sm:w-48 sm:h-48 md:w-64 md:h-64 lg:w-72 lg:h-72
+                    bg-white rounded-xl sm:rounded-2xl shadow-2xl
                     overflow-hidden
-                    border-4
+                    border-2 sm:border-4
                   "
                   style={{
                     borderColor: getPlayerColor(players, primaryWinner.playerId),
@@ -351,12 +351,12 @@ function VotingResults({
             variants={floatUpVariants}
             initial="initial"
             animate="animate"
-            className="w-full max-w-lg"
+            className="w-full max-w-sm sm:max-w-md lg:max-w-lg px-2"
           >
             <motion.h3
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-xl font-bold text-purple-700 mb-4 text-center"
+              className="text-base sm:text-xl lg:text-2xl font-bold text-purple-700 mb-2 sm:mb-4 text-center"
             >
               Round Scores
             </motion.h3>

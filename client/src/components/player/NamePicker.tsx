@@ -161,13 +161,13 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
 
   return (
     <div className="text-center">
-      <h2 className="text-2xl font-bold text-teal-800 mb-6">Choose Your Name</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-4 sm:mb-6">Choose Your Name</h2>
 
       {/* Player Avatar with color */}
       <div
         className={`
-          w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center
-          text-3xl font-bold text-white shadow-lg
+          w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center
+          text-2xl sm:text-3xl font-bold text-white shadow-lg
           transition-transform duration-300
           ${isGenerating ? 'scale-110' : 'scale-100'}
         `}
@@ -178,7 +178,7 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
 
       {/* Current name display or custom input */}
       {isCustomMode ? (
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <input
             ref={inputRef}
             type="text"
@@ -188,10 +188,10 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
             onBlur={handleCustomNameSubmit}
             placeholder="Enter your name"
             maxLength={20}
-            className="w-full text-center text-xl font-semibold border-2 border-teal-400 rounded-lg px-4 py-3 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
+            className="w-full text-center text-lg sm:text-xl font-semibold border-2 border-teal-400 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-200"
             aria-label="Custom name input"
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
             Press Enter to save or Escape to cancel
           </p>
         </div>
@@ -200,7 +200,7 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
           onClick={handleEnterCustomMode}
           disabled={isReady}
           className={`
-            text-2xl font-bold mb-4 px-4 py-2 rounded-lg transition-all
+            text-xl sm:text-2xl font-bold mb-3 sm:mb-4 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-all
             ${isReady
               ? 'text-gray-600 cursor-not-allowed'
               : 'text-gray-800 hover:bg-teal-50 cursor-pointer'
@@ -218,8 +218,8 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
         onClick={handleGenerateNewName}
         disabled={isReady || isCustomMode}
         className={`
-          w-full font-semibold py-3 px-6 rounded-lg transition-all mb-4
-          flex items-center justify-center gap-2
+          w-full font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-all mb-3 sm:mb-4
+          flex items-center justify-center gap-2 text-sm sm:text-base
           ${isReady || isCustomMode
             ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
             : 'bg-purple-100 text-purple-700 hover:bg-purple-200 active:scale-[0.98]'
@@ -227,7 +227,7 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
         `}
       >
         <svg
-          className={`w-5 h-5 ${isGenerating ? 'animate-spin' : ''}`}
+          className={`w-4 h-4 sm:w-5 sm:h-5 ${isGenerating ? 'animate-spin' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -243,9 +243,9 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
       </button>
 
       {/* Divider with "or" */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
         <div className="flex-1 h-px bg-gray-300"></div>
-        <span className="text-sm text-gray-500">or tap your name to edit</span>
+        <span className="text-xs sm:text-sm text-gray-500">or tap name to edit</span>
         <div className="flex-1 h-px bg-gray-300"></div>
       </div>
 
@@ -254,7 +254,7 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
         onClick={handleReadyToggle}
         disabled={isCustomMode}
         className={`
-          w-full font-bold py-4 px-6 rounded-xl transition-all text-xl
+          w-full font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl transition-all text-lg sm:text-xl
           shadow-lg active:scale-[0.98]
           ${isCustomMode
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -266,7 +266,7 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
       >
         {isReady ? (
           <span className="flex items-center justify-center gap-2">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
             Ready!
@@ -278,11 +278,11 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
 
       {/* Ready status message */}
       {isReady && (
-        <div className="mt-4">
-          <p className="text-green-600 font-medium animate-pulse">
+        <div className="mt-3 sm:mt-4">
+          <p className="text-sm sm:text-base text-green-600 font-medium animate-pulse">
             Waiting for host to start the game...
           </p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
             Tap "Ready!" again to change your name
           </p>
         </div>

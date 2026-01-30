@@ -257,27 +257,27 @@ function DrawingCanvas({
   // Show submitted state
   if (hasSubmitted) {
     return (
-      <div className="text-center">
-        <div className="text-5xl mb-4">✓</div>
-        <h2 className="text-xl font-bold text-green-600 mb-2">
+      <div className="text-center py-4">
+        <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">✓</div>
+        <h2 className="text-lg sm:text-xl font-bold text-green-600 mb-1 sm:mb-2">
           Drawing Submitted!
         </h2>
-        <p className="text-gray-600">Waiting for other players...</p>
+        <p className="text-sm sm:text-base text-gray-600">Waiting for other players...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Question and Timer Header */}
-      <div className="text-center mb-3">
-        <h2 className="text-lg font-bold text-teal-800">Draw:</h2>
-        <p className="text-xl font-semibold text-purple-600 mb-2">{question}</p>
+    <div className="flex flex-col h-full min-h-0">
+      {/* Question and Timer Header - compact for phones */}
+      <div className="text-center mb-2 sm:mb-3 flex-shrink-0">
+        <h2 className="text-sm sm:text-lg font-bold text-teal-800">Draw:</h2>
+        <p className="text-base sm:text-xl font-semibold text-purple-600 mb-1 sm:mb-2 line-clamp-2">{question}</p>
 
         {/* Timer */}
         {timerSeconds !== null && (
           <div
-            className={`text-2xl font-mono font-bold ${
+            className={`text-xl sm:text-2xl font-mono font-bold ${
               timerSeconds <= 5
                 ? 'text-red-500 animate-pulse'
                 : timerSeconds <= 10
@@ -290,10 +290,10 @@ function DrawingCanvas({
         )}
       </div>
 
-      {/* Canvas Container */}
+      {/* Canvas Container - takes available space */}
       <div
         ref={containerRef}
-        className="flex-1 flex items-center justify-center mb-3"
+        className="flex-1 flex items-center justify-center mb-2 sm:mb-3 min-h-0"
       >
         <canvas
           ref={canvasRef}
@@ -311,15 +311,15 @@ function DrawingCanvas({
         />
       </div>
 
-      {/* Controls - Clear and Submit */}
-      <div className="flex gap-2">
+      {/* Controls - Clear and Submit - compact for phones */}
+      <div className="flex gap-2 flex-shrink-0">
         {/* Clear Button */}
         <button
           onClick={clearCanvas}
-          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
         >
           <svg
-            className="w-5 h-5"
+            className="w-4 h-4 sm:w-5 sm:h-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -331,21 +331,21 @@ function DrawingCanvas({
               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
             />
           </svg>
-          Clear
+          <span className="hidden xs:inline">Clear</span>
         </button>
 
         {/* Submit Button */}
         <button
           onClick={handleSubmit}
           disabled={!hasDrawn}
-          className={`flex-[2] font-bold py-3 px-6 rounded-lg transition-all flex items-center justify-center gap-2 ${
+          className={`flex-[2] font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base ${
             hasDrawn
               ? 'bg-teal-600 hover:bg-teal-700 text-white active:scale-[0.98]'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
           }`}
         >
           <svg
-            className="w-5 h-5"
+            className="w-4 h-4 sm:w-5 sm:h-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -357,12 +357,12 @@ function DrawingCanvas({
               d="M5 13l4 4L19 7"
             />
           </svg>
-          Submit Drawing
+          Submit
         </button>
       </div>
 
-      {/* Help text */}
-      <p className="text-center text-xs text-gray-500 mt-2">
+      {/* Help text - hidden on very small screens */}
+      <p className="hidden xs:block text-center text-[10px] sm:text-xs text-gray-500 mt-1 sm:mt-2 flex-shrink-0">
         Draw with your finger or mouse
       </p>
     </div>

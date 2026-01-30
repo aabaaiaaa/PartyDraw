@@ -48,14 +48,14 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
   return (
     <div className="text-center">
       {/* Animated waiting message */}
-      <div className="mb-6">
-        <div className="w-16 h-16 mx-auto mb-4 relative">
+      <div className="mb-4 sm:mb-6">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 relative">
           {/* Pulsing ring animation */}
           <div className="absolute inset-0 rounded-full bg-teal-400 animate-ping opacity-25" />
           <div className="absolute inset-0 rounded-full bg-teal-500 animate-pulse opacity-50" />
-          <div className="relative w-16 h-16 rounded-full bg-teal-600 flex items-center justify-center">
+          <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-teal-600 flex items-center justify-center">
             <svg
-              className="w-8 h-8 text-white"
+              className="w-6 h-6 sm:w-8 sm:h-8 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -70,19 +70,19 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-teal-800 mb-2">
+        <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-1 sm:mb-2">
           Waiting for host{dots}
         </h2>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600">
           The game will start when the host begins
         </p>
       </div>
 
       {/* Ready status summary */}
-      <div className="bg-teal-50 rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
+      <div className="bg-teal-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-2">
           <svg
-            className="w-5 h-5 text-green-500"
+            className="w-4 h-4 sm:w-5 sm:h-5 text-green-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -94,13 +94,13 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <span className="text-lg font-semibold text-teal-800">
+          <span className="text-base sm:text-lg font-semibold text-teal-800">
             {readyCount}/{totalPlayers} Players Ready
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="w-full h-1.5 sm:h-2 bg-gray-200 rounded-full overflow-hidden">
           <div
             className="h-full bg-green-500 transition-all duration-300"
             style={{ width: `${totalPlayers > 0 ? (readyCount / totalPlayers) * 100 : 0}%` }}
@@ -109,33 +109,33 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
       </div>
 
       {/* Player list */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+      <div className="mb-4 sm:mb-6">
+        <h3 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 sm:mb-3">
           Players in Room
         </h3>
-        <div className="space-y-2 max-h-48 overflow-y-auto">
+        <div className="space-y-1.5 sm:space-y-2 max-h-32 sm:max-h-48 overflow-y-auto">
           {players.map((player) => (
             <div
               key={player.id}
               className={`
-                flex items-center justify-between p-3 rounded-lg transition-all
+                flex items-center justify-between p-2 sm:p-3 rounded-lg transition-all
                 ${player.id === currentPlayerId
                   ? 'bg-teal-100 border-2 border-teal-300'
                   : 'bg-gray-50'
                 }
               `}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 {/* Player avatar */}
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white shadow-md flex-shrink-0"
                   style={{ backgroundColor: player.color }}
                 >
                   {getInitials(player.name)}
                 </div>
 
                 {/* Player name */}
-                <span className="font-medium text-gray-800">
+                <span className="font-medium text-gray-800 text-sm sm:text-base truncate">
                   {player.name}
                   {player.id === currentPlayerId && (
                     <span className="text-teal-600 ml-1">(You)</span>
@@ -145,9 +145,9 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
 
               {/* Ready indicator */}
               {player.isReady ? (
-                <div className="flex items-center gap-1 text-green-600">
+                <div className="flex items-center gap-1 text-green-600 flex-shrink-0">
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4 sm:w-5 sm:h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -159,12 +159,12 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <span className="text-sm font-medium">Ready</span>
+                  <span className="text-xs sm:text-sm font-medium">Ready</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 text-gray-400">
+                <div className="flex items-center gap-1 text-gray-400 flex-shrink-0">
                   <svg
-                    className="w-5 h-5 animate-pulse"
+                    className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -176,7 +176,7 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span className="text-sm">Waiting</span>
+                  <span className="text-xs sm:text-sm hidden xs:inline">Waiting</span>
                 </div>
               )}
             </div>
@@ -187,11 +187,11 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
       {/* Cancel Ready button */}
       <button
         onClick={onCancelReady}
-        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all active:scale-[0.98] border border-gray-300"
+        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-all active:scale-[0.98] border border-gray-300 text-sm sm:text-base"
       >
         Cancel Ready
       </button>
-      <p className="text-xs text-gray-500 mt-2">
+      <p className="text-[10px] sm:text-xs text-gray-500 mt-1.5 sm:mt-2">
         Tap to change your name or unready
       </p>
     </div>

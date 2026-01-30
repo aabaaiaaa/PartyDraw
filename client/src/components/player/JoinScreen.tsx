@@ -88,12 +88,12 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
 
   return (
     <div className="text-center">
-      <h2 className="text-2xl font-bold text-teal-800 mb-2">Join a Game</h2>
-      <p className="text-gray-600 mb-6">
+      <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-1 sm:mb-2">Join a Game</h2>
+      <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
         Enter the room code shown on the main screen
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
         {/* Room code input */}
         <div className="relative">
           <input
@@ -110,8 +110,8 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
             autoCapitalize="characters"
             spellCheck={false}
             className={`
-              w-full text-center text-3xl font-mono tracking-[0.3em] uppercase
-              border-2 rounded-lg px-4 py-4
+              w-full text-center text-2xl sm:text-3xl font-mono tracking-[0.2em] sm:tracking-[0.3em] uppercase
+              border-2 rounded-lg px-3 py-3 sm:px-4 sm:py-4
               focus:outline-none transition-colors
               disabled:opacity-50 disabled:cursor-not-allowed
               ${displayError
@@ -125,7 +125,7 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
           />
 
           {/* Character count indicator */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-mono">
+          <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs sm:text-sm font-mono">
             {roomCode.length}/6
           </div>
         </div>
@@ -134,11 +134,11 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
         {displayError && (
           <p
             id="error-message"
-            className="text-red-500 text-sm flex items-center justify-center gap-1"
+            className="text-red-500 text-xs sm:text-sm flex items-center justify-center gap-1"
             role="alert"
           >
             <svg
-              className="w-4 h-4"
+              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -157,8 +157,8 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
           type="submit"
           disabled={isJoining || roomCode.length === 0}
           className={`
-            w-full font-bold py-4 px-6 rounded-lg transition-all
-            text-white text-lg
+            w-full font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-lg transition-all
+            text-white text-base sm:text-lg
             disabled:opacity-50 disabled:cursor-not-allowed
             ${isJoining
               ? 'bg-teal-500'
@@ -169,7 +169,7 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
           {isJoining ? (
             <span className="flex items-center justify-center gap-2">
               <svg
-                className="animate-spin h-5 w-5"
+                className="animate-spin h-4 w-4 sm:h-5 sm:w-5"
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -196,7 +196,7 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
       </form>
 
       {/* Help text */}
-      <p className="text-gray-500 text-xs mt-6">
+      <p className="text-gray-500 text-[10px] sm:text-xs mt-4 sm:mt-6">
         Look for the 6-character code on the TV or host's screen
       </p>
     </div>

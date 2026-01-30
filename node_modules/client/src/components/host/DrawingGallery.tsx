@@ -68,19 +68,20 @@ function getTimerColorClasses(seconds: number | null): {
 
 /**
  * Get responsive grid columns based on number of drawings
+ * Optimized for tablet/TV displays
  */
 function getGridClasses(drawingCount: number): string {
   if (drawingCount <= 2) {
-    return 'grid-cols-1 sm:grid-cols-2';
+    return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2';
   }
   if (drawingCount <= 4) {
-    return 'grid-cols-2 md:grid-cols-2 lg:grid-cols-4';
+    return 'grid-cols-2 lg:grid-cols-4';
   }
   if (drawingCount <= 6) {
-    return 'grid-cols-2 md:grid-cols-3';
+    return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3';
   }
   // 7-8 drawings
-  return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+  return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4';
 }
 
 /**
@@ -169,24 +170,24 @@ function DrawingGallery({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-start min-h-[400px] py-4"
+      className="flex flex-col items-center justify-start min-h-[300px] sm:min-h-[400px] lg:min-h-[450px] py-2 sm:py-4"
     >
       {/* Header with timer */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center mb-6"
+        className="text-center mb-3 sm:mb-4 lg:mb-6"
       >
         <motion.h2
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-          className="text-4xl md:text-5xl font-black text-purple-800 mb-2"
+          className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-purple-800 mb-1 sm:mb-2"
         >
           Vote Now!
         </motion.h2>
-        <p className="text-lg text-gray-600">
+        <p className="text-sm sm:text-lg lg:text-xl text-gray-600">
           Pick your favorite drawing
         </p>
       </motion.div>
@@ -200,10 +201,10 @@ function DrawingGallery({
         whileInView={isLowTime ? 'pulse' : 'normal'}
         className={`
           flex items-center justify-center
-          w-24 h-24 md:w-28 md:h-28 rounded-full
+          w-16 h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full
           ${timerColors.bg}
-          ring-4 ${timerColors.ring}
-          shadow-lg mb-6
+          ring-2 sm:ring-4 ${timerColors.ring}
+          shadow-lg mb-3 sm:mb-4 lg:mb-6
           transition-colors duration-300
         `}
       >
@@ -213,7 +214,7 @@ function DrawingGallery({
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.2 }}
           className={`
-            text-4xl md:text-5xl font-black leading-none
+            text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-none
             ${timerColors.text}
           `}
         >
@@ -226,9 +227,9 @@ function DrawingGallery({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="mb-6 text-center"
+        className="mb-3 sm:mb-4 lg:mb-6 text-center"
       >
-        <span className="text-lg font-medium text-gray-600">
+        <span className="text-sm sm:text-lg lg:text-xl font-medium text-gray-600">
           {allVoted ? (
             <motion.span
               initial={{ scale: 0.8 }}
@@ -260,7 +261,7 @@ function DrawingGallery({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className={`grid ${gridClasses} gap-4 md:gap-6 w-full max-w-5xl px-2`}
+        className={`grid ${gridClasses} gap-2 sm:gap-4 md:gap-5 lg:gap-6 w-full max-w-5xl lg:max-w-6xl xl:max-w-7xl px-2`}
       >
         {drawings.map((drawing, index) => {
           const player = getPlayer(drawing.playerId);
@@ -335,10 +336,11 @@ function DrawingGallery({
                 }}
                 whileHover={{ scale: 1.05 }}
                 className="
-                  mt-3 px-4 py-2 rounded-full
-                  font-semibold text-lg
+                  mt-2 sm:mt-3 px-2 py-1 sm:px-4 sm:py-2 rounded-full
+                  font-semibold text-sm sm:text-lg lg:text-xl
                   text-white
                   shadow-md
+                  truncate max-w-full
                 "
                 style={{ backgroundColor: playerColor }}
               >

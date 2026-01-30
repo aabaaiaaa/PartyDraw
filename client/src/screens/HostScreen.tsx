@@ -123,46 +123,49 @@ function HostScreen({ deviceId }: HostScreenProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col">
-      {/* Header */}
-      <header className="py-4 px-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white drop-shadow-lg">
+      {/* Header - scales for larger screens */}
+      <header className="py-3 px-4 sm:py-4 sm:px-6 lg:py-5 lg:px-8 flex justify-between items-center">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white drop-shadow-lg">
           PartyDraw
         </h1>
         {gameState.inRoom && gameState.roomCode && (
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-            <span className="text-white font-medium">
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 lg:px-5 lg:py-2.5">
+            <span className="text-white font-medium text-sm sm:text-base lg:text-lg">
               Room: {gameState.roomCode}
             </span>
           </div>
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 max-w-4xl w-full">
+      {/* Main Content - responsive padding and max-width for different screen sizes */}
+      <main className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 lg:p-10 max-w-4xl lg:max-w-5xl xl:max-w-6xl w-full min-h-[60vh] md:min-h-[65vh] lg:min-h-[70vh] flex flex-col">
           {/* Error display */}
           {gameState.error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 sm:px-4 sm:py-3 rounded mb-4 sm:mb-6 text-sm sm:text-base">
               {gameState.error}
             </div>
           )}
 
           {/* Loading state while room is being created */}
           {!gameState.inRoom && !gameState.error && (
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mx-auto mb-4" />
-              <p className="text-lg text-gray-600">Creating room...</p>
+            <div className="text-center flex-1 flex flex-col items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 border-4 border-purple-600 border-t-transparent mx-auto mb-4" />
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600">Creating room...</p>
             </div>
           )}
 
-          {/* Game content based on status */}
-          {gameState.inRoom && renderGameContent(gameState.status, gameState, handlePlayAgain, startGame)}
+          {/* Game content based on status - flex-1 to fill available space */}
+          <div className="flex-1 flex flex-col">
+            {gameState.inRoom && renderGameContent(gameState.status, gameState, handlePlayAgain, startGame)}
+          </div>
         </div>
       </main>
 
-      {/* Footer with debug info */}
-      <footer className="py-2 px-6 text-center text-white/60 text-sm">
-        Device: {deviceId} | Status: {gameState.status}
+      {/* Footer with debug info - smaller on mobile, hidden on very small screens */}
+      <footer className="py-1.5 px-4 sm:py-2 sm:px-6 text-center text-white/60 text-xs sm:text-sm">
+        <span className="hidden xs:inline">Device: {deviceId} | </span>
+        Status: {gameState.status}
         {gameState.currentRound > 0 &&
           ` | Round ${gameState.currentRound}/${gameState.totalRounds}`}
       </footer>

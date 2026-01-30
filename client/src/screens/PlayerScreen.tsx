@@ -48,48 +48,48 @@ function ScoreDisplay({
 
   return (
     <div className="text-center">
-      <h2 className="text-2xl font-bold text-teal-800 mb-2">Round {round} Results</h2>
-      <p className="text-gray-600 mb-4">
+      <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-1 sm:mb-2">Round {round} Results</h2>
+      <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
         {round < totalRounds ? 'Next round starting soon...' : 'Final results coming!'}
       </p>
 
       {/* Current player score highlight */}
       {currentPlayerResult && (
-        <div className="bg-teal-100 rounded-lg p-4 mb-4">
-          <p className="text-lg font-semibold text-teal-800">Your Score</p>
-          <p className="text-3xl font-bold text-teal-600">
+        <div className="bg-teal-100 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+          <p className="text-base sm:text-lg font-semibold text-teal-800">Your Score</p>
+          <p className="text-2xl sm:text-3xl font-bold text-teal-600">
             +{currentPlayerResult.pointsEarned}
           </p>
-          <p className="text-sm text-teal-600">
+          <p className="text-xs sm:text-sm text-teal-600">
             {currentPlayerResult.votes} vote{currentPlayerResult.votes !== 1 ? 's' : ''}
           </p>
         </div>
       )}
 
       {/* All results */}
-      <div className="space-y-2">
+      <div className="space-y-1.5 sm:space-y-2">
         {voteResults
           .sort((a, b) => b.pointsEarned - a.pointsEarned)
           .map((result, index) => (
             <div
               key={result.playerId}
-              className={`flex items-center justify-between p-2 rounded-lg ${
+              className={`flex items-center justify-between p-1.5 sm:p-2 rounded-lg ${
                 result.playerId === currentPlayerId
                   ? 'bg-teal-50 border border-teal-200'
                   : 'bg-gray-50'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 w-6">{index + 1}.</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <span className="text-gray-500 w-5 sm:w-6 text-xs sm:text-sm flex-shrink-0">{index + 1}.</span>
                 <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white font-bold"
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs text-white font-bold flex-shrink-0"
                   style={{ backgroundColor: getPlayerColor(result.playerId) }}
                 >
                   {result.playerName.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm font-medium">{result.playerName}</span>
+                <span className="text-xs sm:text-sm font-medium truncate">{result.playerName}</span>
               </div>
-              <span className="text-sm font-bold text-teal-600">+{result.pointsEarned}</span>
+              <span className="text-xs sm:text-sm font-bold text-teal-600 flex-shrink-0">+{result.pointsEarned}</span>
             </div>
           ))}
       </div>
@@ -123,17 +123,17 @@ function FinalStandings({
 
   return (
     <div className="text-center">
-      <h2 className="text-2xl font-bold text-teal-800 mb-2">Game Over!</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-1 sm:mb-2">Game Over!</h2>
 
       {/* Winner announcement */}
       {winner && (
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           {isWinner ? (
-            <p className="text-xl text-yellow-500 font-bold animate-pulse">
+            <p className="text-lg sm:text-xl text-yellow-500 font-bold animate-pulse">
               🎉 You Won! 🎉
             </p>
           ) : (
-            <p className="text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-gray-600">
               Winner: <span className="font-bold">{winner.playerName}</span>
             </p>
           )}
@@ -142,41 +142,41 @@ function FinalStandings({
 
       {/* Current player position */}
       {currentPlayerStanding >= 0 && (
-        <div className="bg-teal-100 rounded-lg p-4 mb-4">
-          <p className="text-lg font-semibold text-teal-800">Your Position</p>
-          <p className="text-3xl font-bold text-teal-600">
+        <div className="bg-teal-100 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+          <p className="text-base sm:text-lg font-semibold text-teal-800">Your Position</p>
+          <p className="text-2xl sm:text-3xl font-bold text-teal-600">
             #{currentPlayerStanding + 1}
           </p>
-          <p className="text-lg text-teal-600">
+          <p className="text-base sm:text-lg text-teal-600">
             {standings[currentPlayerStanding]?.score || 0} points
           </p>
         </div>
       )}
 
       {/* Standings list */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6">
         {standings.slice(0, 5).map((entry, index) => (
           <div
             key={entry.playerId}
-            className={`flex items-center justify-between p-2 rounded-lg ${
+            className={`flex items-center justify-between p-1.5 sm:p-2 rounded-lg ${
               entry.playerId === currentPlayerId
                 ? 'bg-teal-50 border border-teal-200'
                 : 'bg-gray-50'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 w-6 font-bold">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <span className="text-gray-500 w-5 sm:w-6 font-bold text-sm sm:text-base flex-shrink-0">
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
               </span>
               <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white font-bold"
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs text-white font-bold flex-shrink-0"
                 style={{ backgroundColor: getPlayerColor(entry.playerId) }}
               >
                 {entry.playerName.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm font-medium">{entry.playerName}</span>
+              <span className="text-xs sm:text-sm font-medium truncate">{entry.playerName}</span>
             </div>
-            <span className="text-sm font-bold text-teal-600">{entry.score}</span>
+            <span className="text-xs sm:text-sm font-bold text-teal-600 flex-shrink-0">{entry.score}</span>
           </div>
         ))}
       </div>
@@ -184,7 +184,7 @@ function FinalStandings({
       {/* Play again button */}
       <button
         onClick={onPlayAgain}
-        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors text-sm sm:text-base"
       >
         Play Again
       </button>
@@ -244,8 +244,8 @@ function renderPlayerContent(
   if (gameState.status === 'countdown') {
     return (
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-teal-800 mb-4">Get Ready!</h2>
-        <div className="text-6xl font-bold text-purple-600 animate-pulse">
+        <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-3 sm:mb-4">Get Ready!</h2>
+        <div className="text-5xl sm:text-6xl font-bold text-purple-600 animate-pulse">
           {gameState.countdownValue || '...'}
         </div>
       </div>
@@ -337,31 +337,31 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 flex flex-col">
-      {/* Header */}
-      <header className="py-3 px-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-white drop-shadow-lg">
+    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 flex flex-col">
+      {/* Header - compact for phones */}
+      <header className="py-2 px-3 sm:py-3 sm:px-4 flex justify-between items-center flex-shrink-0">
+        <h1 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg">
           PartyDraw
         </h1>
         {gameState.inRoom && gameState.roomCode && (
-          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
-            <span className="text-white text-sm font-medium">
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-2 py-0.5 sm:px-3 sm:py-1">
+            <span className="text-white text-xs sm:text-sm font-medium">
               {gameState.roomCode}
             </span>
           </div>
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-6 max-w-md w-full">
+      {/* Main Content - optimized for phone screens with safe area padding */}
+      <main className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-md w-full max-h-full overflow-y-auto">
           {/* Dismissible error display */}
           {gameState.error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-4 flex items-center justify-between">
-              <span className="text-sm">{gameState.error}</span>
+            <div className="bg-red-100 border border-red-400 text-red-700 px-2 py-1.5 sm:px-3 sm:py-2 rounded mb-3 sm:mb-4 flex items-center justify-between">
+              <span className="text-xs sm:text-sm">{gameState.error}</span>
               <button
                 onClick={clearError}
-                className="text-red-700 hover:text-red-900 ml-2"
+                className="text-red-700 hover:text-red-900 ml-2 text-lg leading-none"
               >
                 ×
               </button>
@@ -373,12 +373,15 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
         </div>
       </main>
 
-      {/* Footer with debug info */}
-      <footer className="py-2 px-4 text-center text-white/60 text-xs">
-        Device: {deviceId} | Status: {gameState.status}
+      {/* Footer with debug info - minimal on phones */}
+      <footer className="py-1 px-3 sm:py-2 sm:px-4 text-center text-white/60 text-[10px] sm:text-xs flex-shrink-0 safe-area-bottom">
+        <span className="hidden sm:inline">Device: {deviceId} | </span>
+        Status: {gameState.status}
         {gameState.currentRound > 0 &&
-          ` | Round ${gameState.currentRound}/${gameState.totalRounds}`}
-        {gameState.currentPlayer && ` | ${gameState.currentPlayer.name}`}
+          ` | R${gameState.currentRound}/${gameState.totalRounds}`}
+        {gameState.currentPlayer && (
+          <span className="hidden xs:inline"> | {gameState.currentPlayer.name}</span>
+        )}
       </footer>
     </div>
   );
