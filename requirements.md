@@ -388,7 +388,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Test state transitions: lobby → countdown requires all ready, drawing → voting on timer/all submitted, voting → results on timer/all voted, results → drawing or final based on round count.
 
 ### TASK-059: Unit test name generator
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-010, TASK-054
 - **Description**: Test name generation: returns verb+animal format, generates different names on subsequent calls, all generated names are valid strings.
