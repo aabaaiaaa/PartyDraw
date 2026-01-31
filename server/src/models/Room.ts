@@ -264,13 +264,14 @@ export function castVote(room: Room, voterId: string, votedForId: string): Room 
 }
 
 /**
- * Checks if all connected players have submitted their drawings
+ * Checks if all connected active (non-spectator) players have submitted their drawings
  * @param room - The room to check
- * @returns True if all connected players have submitted
+ * @returns True if all connected active players have submitted
  */
 export function haveAllPlayersSubmittedDrawings(room: Room): boolean {
   for (const player of room.players.values()) {
-    if (player.isConnected && !room.gameState.drawings.has(player.id)) {
+    // Spectators don't need to submit drawings
+    if (player.isConnected && !player.isSpectator && !room.gameState.drawings.has(player.id)) {
       return false;
     }
   }
@@ -278,15 +279,29 @@ export function haveAllPlayersSubmittedDrawings(room: Room): boolean {
 }
 
 /**
- * Checks if all connected players have voted
+ * Checks if all connected active (non-spectator) players have voted
  * @param room - The room to check
- * @returns True if all connected players have voted
+ * @returns True if all connected active players have voted
  */
 export function haveAllPlayersVoted(room: Room): boolean {
   for (const player of room.players.values()) {
-    if (player.isConnected && !room.gameState.votes.has(player.id)) {
+    // Spectators don't need to vote
+    if (player.isConnected && !player.isSpectator && !room.gameState.votes.has(player.id)) {
       return false;
     }
   }
   return true;
+}
+
+/**
+ * Gets the count of active (non-spectator) connected players in the room
+ * @param room - The room to check
+ * @returns The count of active connected players
+ */
+export function getActivePlayerCount(room: Room): number {
+  let count = 0;
+  for (const player of room.players.values()) {
+    if (player.isConnected && !player.isSpectator) count++;
+  }
+  return count;
 }

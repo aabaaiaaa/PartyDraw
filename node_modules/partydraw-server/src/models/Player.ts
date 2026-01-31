@@ -23,6 +23,8 @@ export interface Player {
   score: number;
   /** Timestamp of the last heartbeat received from the player */
   lastHeartbeat: number;
+  /** Whether the player is a spectator (joined mid-game, waiting for next round) */
+  isSpectator: boolean;
 }
 
 /** Available player colors for avatar display */
@@ -51,7 +53,8 @@ export function createPlayer(
   id: string,
   name: string,
   socketId: string,
-  color?: string
+  color?: string,
+  isSpectator: boolean = false
 ): Player {
   return {
     id,
@@ -62,6 +65,7 @@ export function createPlayer(
     isConnected: true,
     score: 0,
     lastHeartbeat: Date.now(),
+    isSpectator,
   };
 }
 

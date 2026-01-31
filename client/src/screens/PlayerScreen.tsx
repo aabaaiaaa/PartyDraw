@@ -195,6 +195,92 @@ function FinalStandings({
 }
 
 /**
+ * Spectator Waiting component - shown when player joins mid-game
+ */
+function SpectatorWaiting({
+  currentRound,
+  totalRounds,
+  question,
+  status,
+}: {
+  currentRound: number;
+  totalRounds: number;
+  question: string | null;
+  status: string;
+}) {
+  return (
+    <div className="text-center">
+      <div className="mb-4">
+        <div className="w-16 h-16 mx-auto bg-teal-100 rounded-full flex items-center justify-center mb-3">
+          <svg
+            className="w-8 h-8 text-teal-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+            />
+          </svg>
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-2">
+          Waiting for Next Round
+        </h2>
+        <p className="text-gray-600 text-sm sm:text-base mb-4">
+          You joined during an active game. You'll be able to play starting next round!
+        </p>
+      </div>
+
+      {/* Current game status */}
+      <div className="bg-gray-100 rounded-lg p-3 sm:p-4 mb-4">
+        <p className="text-xs sm:text-sm text-gray-500 mb-1">Round {currentRound} of {totalRounds}</p>
+        {status === 'drawing' && (
+          <p className="text-sm sm:text-base font-medium text-teal-700">
+            Players are drawing...
+          </p>
+        )}
+        {status === 'voting' && (
+          <p className="text-sm sm:text-base font-medium text-teal-700">
+            Players are voting...
+          </p>
+        )}
+        {status === 'results' && (
+          <p className="text-sm sm:text-base font-medium text-teal-700">
+            Showing round results...
+          </p>
+        )}
+        {status === 'countdown' && (
+          <p className="text-sm sm:text-base font-medium text-teal-700">
+            Game is starting...
+          </p>
+        )}
+        {question && (
+          <p className="text-xs sm:text-sm text-gray-500 mt-2 italic">
+            Current prompt: "{question}"
+          </p>
+        )}
+      </div>
+
+      {/* Animated waiting indicator */}
+      <div className="flex justify-center items-center gap-1.5">
+        <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+        <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+        <div className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+      </div>
+    </div>
+  );
+}
+
+/**
  * Renders the appropriate component based on game status for player
  */
 function renderPlayerContent(
@@ -218,6 +304,9 @@ function renderPlayerContent(
     );
   }
 
+  // Check if current player is a spectator (joined mid-game)
+  const isSpectator = gameState.currentPlayer?.isSpectator === true;
+
   // In lobby - show name picker or waiting screen based on ready status
   if (gameState.status === 'lobby' && gameState.currentPlayer) {
     // If player is ready, show WaitingScreen
@@ -238,6 +327,18 @@ function renderPlayerContent(
         onUpdateName={actions.updateName}
         onReady={actions.setReady}
         isReady={gameState.currentPlayer.isReady}
+      />
+    );
+  }
+
+  // If player is a spectator during any active game phase, show spectator UI
+  if (isSpectator && gameState.status !== 'lobby' && gameState.status !== 'final') {
+    return (
+      <SpectatorWaiting
+        currentRound={gameState.currentRound}
+        totalRounds={gameState.totalRounds}
+        question={gameState.question}
+        status={gameState.status}
       />
     );
   }

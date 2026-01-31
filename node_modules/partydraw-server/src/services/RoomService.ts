@@ -71,6 +71,8 @@ export class RoomService {
 
   /**
    * Joins a player to a room by room code
+   * If the game is in progress, the player joins as a spectator and will
+   * participate starting from the next round.
    * @param roomCode - The 6-character room code
    * @param socketId - Socket ID of the joining player
    * @param playerName - Optional custom player name (will generate if not provided)
@@ -80,7 +82,7 @@ export class RoomService {
     roomCode: string,
     socketId: string,
     playerName?: string
-  ): RoomResult<{ room: Room; player: Player }> {
+  ): RoomResult<{ room: Room; player: Player; isSpectator: boolean }> {
     const roomId = this.roomCodeToId.get(roomCode.toUpperCase());
 
     if (!roomId) {
@@ -109,13 +111,17 @@ export class RoomService {
       };
     }
 
-    if (room.status !== 'lobby') {
+    // Don't allow joining during the final phase (game is over)
+    if (room.status === 'final') {
       return {
         success: false,
         error: 'GAME_IN_PROGRESS',
-        message: 'Cannot join room while game is in progress',
+        message: 'Cannot join room - game has ended',
       };
     }
+
+    // Determine if player should be a spectator (joining mid-game)
+    const isSpectator = room.status !== 'lobby';
 
     // Generate unique player name if not provided
     const existingNames = new Set(
@@ -126,9 +132,9 @@ export class RoomService {
     // Get color based on player index
     const color = getColorForPlayerIndex(room.players.size);
 
-    // Create the player
+    // Create the player (as spectator if joining mid-game)
     const playerId = uuidv4();
-    const player = createPlayer(playerId, name, socketId, color);
+    const player = createPlayer(playerId, name, socketId, color, isSpectator);
 
     // Add player to room
     const updatedRoom = addPlayerToRoom(room, player);
@@ -137,7 +143,7 @@ export class RoomService {
     // Track socket to player mapping
     this.socketToPlayer.set(socketId, { roomId, playerId });
 
-    return { success: true, data: { room: updatedRoom, player } };
+    return { success: true, data: { room: updatedRoom, player, isSpectator } };
   }
 
   /**
@@ -547,6 +553,70 @@ export class RoomService {
       success: true,
       data: { room: updatedRoom, player: updatedPlayer },
     };
+  }
+
+  /**
+   * Promotes all spectators in a room to active players
+   * Called at the start of a new round so spectators can participate
+   * @param roomId - The room's unique ID
+   * @returns Result containing the updated room and list of promoted player IDs, or an error
+   */
+  promoteSpectators(
+    roomId: string
+  ): RoomResult<{ room: Room; promotedPlayerIds: string[] }> {
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room not found',
+      };
+    }
+
+    const promotedPlayerIds: string[] = [];
+    const newPlayers = new Map(room.players);
+
+    for (const [playerId, player] of room.players.entries()) {
+      if (player.isSpectator && player.isConnected) {
+        promotedPlayerIds.push(playerId);
+        newPlayers.set(playerId, {
+          ...player,
+          isSpectator: false,
+          isReady: true, // Auto-ready since game is already in progress
+        });
+      }
+    }
+
+    const updatedRoom: Room = {
+      ...room,
+      players: newPlayers,
+    };
+
+    this.rooms.set(roomId, updatedRoom);
+
+    return {
+      success: true,
+      data: { room: updatedRoom, promotedPlayerIds },
+    };
+  }
+
+  /**
+   * Gets the count of active (non-spectator) players in a room
+   * @param roomId - The room's unique ID
+   * @returns Number of active players, or 0 if room not found
+   */
+  getActivePlayerCount(roomId: string): number {
+    const room = this.rooms.get(roomId);
+    if (!room) return 0;
+
+    let count = 0;
+    for (const player of room.players.values()) {
+      if (player.isConnected && !player.isSpectator) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /**

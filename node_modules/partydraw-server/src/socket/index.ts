@@ -66,6 +66,7 @@ function serializePlayer(player: Player): object {
     isReady: player.isReady,
     isConnected: player.isConnected,
     score: player.score,
+    isSpectator: player.isSpectator,
   };
 }
 
@@ -119,6 +120,7 @@ export function setupRoomHandlers(io: Server, socket: Socket): void {
   /**
    * Handle room:join event
    * Joins a player to an existing room by room code
+   * If the game is in progress, the player joins as a spectator
    */
   socket.on(
     'room:join',
@@ -156,25 +158,33 @@ export function setupRoomHandlers(io: Server, socket: Socket): void {
         return;
       }
 
-      const { room, player } = result.data;
+      const { room, player, isSpectator } = result.data;
 
       // Join the socket to the Socket.IO room for broadcasting
       socket.join(room.id);
 
-      console.log(
-        `[room:join] Player "${player.name}" joined room ${room.code} (${room.players.size} players)`
-      );
+      if (isSpectator) {
+        console.log(
+          `[room:join] Player "${player.name}" joined room ${room.code} as SPECTATOR (${room.players.size} players)`
+        );
+      } else {
+        console.log(
+          `[room:join] Player "${player.name}" joined room ${room.code} (${room.players.size} players)`
+        );
+      }
 
       // Emit room:joined event to the joining player
       socket.emit('room:joined', {
         room: serializeRoom(room),
         player: serializePlayer(player),
+        isSpectator,
       });
 
       // Emit room:player-joined event to all other players in the room
       socket.to(room.id).emit('room:player-joined', {
         player: serializePlayer(player),
         playerCount: room.players.size,
+        isSpectator,
       });
 
       if (callback) {
@@ -182,6 +192,7 @@ export function setupRoomHandlers(io: Server, socket: Socket): void {
           success: true,
           room: serializeRoom(room),
           player: serializePlayer(player),
+          isSpectator,
         });
       }
     }
@@ -964,7 +975,7 @@ function transitionToVotingPhase(io: Server, room: Room): void {
 }
 
 /**
- * Auto-submits blank drawings for players who haven't submitted
+ * Auto-submits blank drawings for active (non-spectator) players who haven't submitted
  * Called when the drawing timer expires
  * @param io - The Socket.IO server instance
  * @param room - The room
@@ -973,9 +984,9 @@ function autoSubmitRemainingDrawings(io: Server, room: Room): void {
   let updatedRoom = room;
   const blankDrawing = ''; // Empty string represents no drawing submitted
 
-  // Find players who haven't submitted
+  // Find active players who haven't submitted (spectators are excluded)
   for (const player of room.players.values()) {
-    if (player.isConnected && !room.gameState.drawings.has(player.id)) {
+    if (player.isConnected && !player.isSpectator && !room.gameState.drawings.has(player.id)) {
       console.log(
         `[auto-submit] Auto-submitting blank drawing for player "${player.name}" in room ${room.code}`
       );
@@ -1117,10 +1128,29 @@ function transitionToFinalPhase(io: Server, room: Room): void {
  */
 function startNextRound(io: Server, room: Room): void {
   // Get fresh room state
-  const currentRoom = roomService.getRoom(room.id);
+  let currentRoom = roomService.getRoom(room.id);
   if (!currentRoom) {
     console.error(`[transition] Room ${room.id} not found for next round`);
     return;
+  }
+
+  // Promote any spectators to active players at the start of a new round
+  const promoteResult = roomService.promoteSpectators(room.id);
+  if (promoteResult.success && promoteResult.data.promotedPlayerIds.length > 0) {
+    currentRoom = promoteResult.data.room;
+    console.log(
+      `[transition] Promoted ${promoteResult.data.promotedPlayerIds.length} spectator(s) to active players in room ${currentRoom.code}`
+    );
+
+    // Notify all clients about the promoted players
+    for (const playerId of promoteResult.data.promotedPlayerIds) {
+      const player = currentRoom.players.get(playerId);
+      if (player) {
+        io.to(room.id).emit('player:promoted', {
+          player: serializePlayer(player),
+        });
+      }
+    }
   }
 
   // Prepare for next round

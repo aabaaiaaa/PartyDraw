@@ -23,6 +23,7 @@ export interface Player {
   isReady: boolean;
   isConnected: boolean;
   score: number;
+  isSpectator: boolean;
 }
 
 /**
@@ -273,8 +274,8 @@ export function useGameState(): UseGameStateReturn {
     };
 
     // Room joined (player)
-    const handleRoomJoined = (data: { room: SerializedRoom; player: Player }) => {
-      const { room, player } = data;
+    const handleRoomJoined = (data: { room: SerializedRoom; player: Player; isSpectator?: boolean }) => {
+      const { room, player, isSpectator } = data;
       updateState({
         inRoom: true,
         roomId: room.id,
@@ -286,8 +287,13 @@ export function useGameState(): UseGameStateReturn {
         settings: room.settings,
         totalRounds: room.settings.rounds,
         currentRound: room.gameState.currentRound,
+        question: room.gameState.question,
         error: null,
       });
+      // Log if joining as spectator
+      if (isSpectator) {
+        console.log('[useGameState] Joined as spectator, will participate next round');
+      }
     };
 
     // Player joined the room
@@ -344,6 +350,23 @@ export function useGameState(): UseGameStateReturn {
     const handleAllReady = (data: { playerCount: number }) => {
       // This event informs us all players are ready
       // The host can now start the game
+    };
+
+    // Player promoted from spectator to active player
+    const handlePlayerPromoted = (data: { player: Player }) => {
+      const { player } = data;
+      setGameState((prev) => {
+        const updatedPlayers = prev.players.map((p) =>
+          p.id === player.id ? player : p
+        );
+        const updatedCurrentPlayer =
+          prev.currentPlayer?.id === player.id ? player : prev.currentPlayer;
+        return {
+          ...prev,
+          players: updatedPlayers,
+          currentPlayer: updatedCurrentPlayer,
+        };
+      });
     };
 
     // ============ Game Events ============
@@ -517,6 +540,7 @@ export function useGameState(): UseGameStateReturn {
     socket.on('room:error', handleRoomError);
     socket.on('player:updated', handlePlayerUpdated);
     socket.on('ready:all-ready', handleAllReady);
+    socket.on('player:promoted', handlePlayerPromoted);
     socket.on('game:countdown', handleGameCountdown);
     socket.on('countdown:tick', handleCountdownTick);
     socket.on('round:start', handleRoundStart);
@@ -541,6 +565,7 @@ export function useGameState(): UseGameStateReturn {
       socket.off('room:error', handleRoomError);
       socket.off('player:updated', handlePlayerUpdated);
       socket.off('ready:all-ready', handleAllReady);
+      socket.off('player:promoted', handlePlayerPromoted);
       socket.off('game:countdown', handleGameCountdown);
       socket.off('countdown:tick', handleCountdownTick);
       socket.off('round:start', handleRoundStart);

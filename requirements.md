@@ -302,7 +302,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: On socket disconnect, mark player as disconnected. After 10 seconds without reconnection, remove player from room. Notify other players via room:player-left event.
 
 ### TASK-046: Implement mid-game join
-- **Status**: pending
+- **Status**: done
 - **Priority**: low
 - **Dependencies**: TASK-018
 - **Description**: Allow players to join during a game. New players spectate until the next round starts, then can participate. Show "Waiting for next round" message.

@@ -175,7 +175,7 @@ describe('RoomService', () => {
       }
     });
 
-    it('should fail when game is in progress', () => {
+    it('should allow joining mid-game as spectator', () => {
       const createResult = roomService.createRoom('host-socket-1');
       expect(createResult.success).toBe(true);
 
@@ -184,6 +184,29 @@ describe('RoomService', () => {
         const room = roomService.getRoom(createResult.data.id);
         if (room) {
           const updatedRoom = { ...room, status: 'drawing' as const };
+          roomService.updateRoom(updatedRoom);
+        }
+
+        const joinResult = roomService.joinRoom(createResult.data.code, 'player-socket-1');
+
+        // Should succeed but as a spectator
+        expect(joinResult.success).toBe(true);
+        if (joinResult.success) {
+          expect(joinResult.data.isSpectator).toBe(true);
+          expect(joinResult.data.player.isSpectator).toBe(true);
+        }
+      }
+    });
+
+    it('should fail when game has ended (final status)', () => {
+      const createResult = roomService.createRoom('host-socket-1');
+      expect(createResult.success).toBe(true);
+
+      if (createResult.success) {
+        // Manually set room status to final (game ended)
+        const room = roomService.getRoom(createResult.data.id);
+        if (room) {
+          const updatedRoom = { ...room, status: 'final' as const };
           roomService.updateRoom(updatedRoom);
         }
 
@@ -621,6 +644,79 @@ describe('RoomService', () => {
 
       roomService.createRoom('host-socket-2');
       expect(roomService.getRoomCount()).toBe(2);
+    });
+  });
+
+  describe('promoteSpectators', () => {
+    it('should promote spectators to active players', () => {
+      const createResult = roomService.createRoom('host-socket-1');
+      expect(createResult.success).toBe(true);
+
+      if (createResult.success) {
+        // Add a player normally (in lobby)
+        const joinResult1 = roomService.joinRoom(createResult.data.code, 'player-socket-1');
+        expect(joinResult1.success).toBe(true);
+        if (joinResult1.success) {
+          expect(joinResult1.data.isSpectator).toBe(false);
+        }
+
+        // Set room to drawing phase (game in progress)
+        const room = roomService.getRoom(createResult.data.id);
+        if (room) {
+          const updatedRoom = { ...room, status: 'drawing' as const };
+          roomService.updateRoom(updatedRoom);
+        }
+
+        // Add a player during game (should be spectator)
+        const joinResult2 = roomService.joinRoom(createResult.data.code, 'player-socket-2');
+        expect(joinResult2.success).toBe(true);
+        if (joinResult2.success) {
+          expect(joinResult2.data.isSpectator).toBe(true);
+          expect(joinResult2.data.player.isSpectator).toBe(true);
+        }
+
+        // Now promote spectators
+        const promoteResult = roomService.promoteSpectators(createResult.data.id);
+        expect(promoteResult.success).toBe(true);
+        if (promoteResult.success) {
+          expect(promoteResult.data.promotedPlayerIds.length).toBe(1);
+
+          // Verify the promoted player is now active
+          const promotedPlayer = promoteResult.data.room.players.get(
+            promoteResult.data.promotedPlayerIds[0]
+          );
+          expect(promotedPlayer).toBeDefined();
+          if (promotedPlayer) {
+            expect(promotedPlayer.isSpectator).toBe(false);
+            expect(promotedPlayer.isReady).toBe(true);
+          }
+        }
+      }
+    });
+
+    it('should return empty array when no spectators exist', () => {
+      const createResult = roomService.createRoom('host-socket-1');
+      expect(createResult.success).toBe(true);
+
+      if (createResult.success) {
+        // Add player in lobby (not spectator)
+        roomService.joinRoom(createResult.data.code, 'player-socket-1');
+
+        const promoteResult = roomService.promoteSpectators(createResult.data.id);
+        expect(promoteResult.success).toBe(true);
+        if (promoteResult.success) {
+          expect(promoteResult.data.promotedPlayerIds.length).toBe(0);
+        }
+      }
+    });
+
+    it('should return error when room not found', () => {
+      const result = roomService.promoteSpectators('nonexistent-room-id');
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error).toBe('ROOM_NOT_FOUND');
+      }
     });
   });
 });
