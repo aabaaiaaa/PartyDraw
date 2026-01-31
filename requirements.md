@@ -424,7 +424,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create Playwright E2E test using TestBoardBed: host creates room, 2 players join, all mark ready, game starts, players submit drawings, players vote, results shown, repeat for 3 rounds, final leaderboard displays winner.
 
 ### TASK-065: E2E test player disconnect
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-045, TASK-054
 - **Description**: Create Playwright test: start game with 3 players, disconnect one player mid-round, verify remaining players can continue, verify disconnected player is removed from room.
