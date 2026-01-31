@@ -394,7 +394,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Test name generation: returns verb+animal format, generates different names on subsequent calls, all generated names are valid strings.
 
 ### TASK-060: Unit test question bank
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-016, TASK-054
 - **Description**: Test question selection: getRandomQuestions returns requested count, excludes previously used questions, handles case where all questions used.
