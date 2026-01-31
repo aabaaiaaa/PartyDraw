@@ -430,7 +430,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create Playwright test: start game with 3 players, disconnect one player mid-round, verify remaining players can continue, verify disconnected player is removed from room.
 
 ### TASK-066: E2E test auto-submit
-- **Status**: pending
+- **Status**: done
 - **Priority**: medium
 - **Dependencies**: TASK-044, TASK-054
 - **Description**: Create Playwright test: start game with 2 players, one submits drawing, one does not submit before timer expires, verify both drawings appear in voting gallery.

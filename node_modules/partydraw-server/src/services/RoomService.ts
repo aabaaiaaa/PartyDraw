@@ -208,16 +208,26 @@ export class RoomService {
   /**
    * Gets the room and player info for a socket
    * @param socketId - The socket ID to look up
-   * @returns Room and player info if found
+   * @returns Room and player info if found (playerId is 'host' for host sockets)
    */
   getRoomBySocket(socketId: string): { room: Room; playerId: string } | undefined {
+    // First check if this socket is a player
     const playerInfo = this.socketToPlayer.get(socketId);
-    if (!playerInfo) return undefined;
+    if (playerInfo) {
+      const room = this.rooms.get(playerInfo.roomId);
+      if (room) {
+        return { room, playerId: playerInfo.playerId };
+      }
+    }
 
-    const room = this.rooms.get(playerInfo.roomId);
-    if (!room) return undefined;
+    // Check if this socket is a host
+    for (const room of this.rooms.values()) {
+      if (room.hostSocketId === socketId) {
+        return { room, playerId: 'host' };
+      }
+    }
 
-    return { room, playerId: playerInfo.playerId };
+    return undefined;
   }
 
   /**
