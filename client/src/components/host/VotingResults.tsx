@@ -11,6 +11,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VoteResult, Winner, Drawing, Player } from '../../hooks/useGameState';
+import Confetti from '../common/Confetti';
 
 interface VotingResultsProps {
   /** Round winners (can have ties) */
@@ -57,6 +58,7 @@ function VotingResults({
   // Animation states
   const [showWinner, setShowWinner] = useState(false);
   const [showScores, setShowScores] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [revealedScores, setRevealedScores] = useState<number>(0);
 
   // Stagger animations on mount
@@ -64,11 +66,15 @@ function VotingResults({
     // Show winner after short delay
     const winnerTimer = setTimeout(() => setShowWinner(true), 300);
 
+    // Show confetti when winner is revealed (only if there is a winner)
+    const confettiTimer = setTimeout(() => setShowConfetti(true), 500);
+
     // Show scores after winner animation
     const scoresTimer = setTimeout(() => setShowScores(true), 1000);
 
     return () => {
       clearTimeout(winnerTimer);
+      clearTimeout(confettiTimer);
       clearTimeout(scoresTimer);
     };
   }, []);
@@ -169,8 +175,11 @@ function VotingResults({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col items-center justify-start min-h-[300px] sm:min-h-[400px] lg:min-h-[450px] py-2 sm:py-4"
+      className="relative flex flex-col items-center justify-start min-h-[300px] sm:min-h-[400px] lg:min-h-[450px] py-2 sm:py-4"
     >
+      {/* Confetti celebration for round winner */}
+      <Confetti active={showConfetti && !!primaryWinner} pieceCount={60} maxDelay={1} />
+
       {/* Round indicator */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

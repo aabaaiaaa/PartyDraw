@@ -330,7 +330,7 @@ A multiplayer party drawing game where a main screen displays questions and resu
 - **Description**: Create `client/src/hooks/useAudio.ts` using Howler.js. Add sounds for: countdown ticks, round start, drawing submit, vote cast, round winner, game winner. Preload audio files.
 
 ### TASK-050: Add confetti celebration
-- **Status**: pending
+- **Status**: done
 - **Priority**: low
 - **Dependencies**: TASK-035
 - **Description**: Create `client/src/components/common/Confetti.tsx` that displays confetti particle animation on final leaderboard and round winner screens.

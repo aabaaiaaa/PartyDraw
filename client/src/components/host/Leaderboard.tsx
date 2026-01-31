@@ -17,6 +17,7 @@ import {
   formatScoreDate,
   HighScoreEntry,
 } from '../../utils/leaderboard';
+import Confetti from '../common/Confetti';
 
 interface LeaderboardProps {
   /** Final standings sorted by score (highest first) */
@@ -35,75 +36,6 @@ interface LeaderboardProps {
 function getPlayerColor(players: Player[], playerId: string): string {
   const player = players.find((p) => p.id === playerId);
   return player?.color || '#8B5CF6';
-}
-
-/**
- * Confetti particle component
- */
-interface ConfettiPiece {
-  id: number;
-  x: number;
-  color: string;
-  delay: number;
-  duration: number;
-  rotation: number;
-  size: number;
-}
-
-function Confetti({ active }: { active: boolean }) {
-  const [pieces, setPieces] = useState<ConfettiPiece[]>([]);
-
-  useEffect(() => {
-    if (!active) return;
-
-    const colors = [
-      '#a855f7', // purple
-      '#ec4899', // pink
-      '#facc15', // yellow
-      '#14b8a6', // teal
-      '#f97316', // orange
-      '#3b82f6', // blue
-      '#22c55e', // green
-      '#ef4444', // red
-    ];
-
-    const newPieces: ConfettiPiece[] = [];
-    for (let i = 0; i < 100; i++) {
-      newPieces.push({
-        id: i,
-        x: Math.random() * 100,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        delay: Math.random() * 2,
-        duration: 2 + Math.random() * 2,
-        rotation: Math.random() * 360,
-        size: 6 + Math.random() * 8,
-      });
-    }
-    setPieces(newPieces);
-  }, [active]);
-
-  if (!active) return null;
-
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
-      {pieces.map((piece) => (
-        <div
-          key={piece.id}
-          className="confetti-piece absolute"
-          style={{
-            left: `${piece.x}%`,
-            top: '-20px',
-            width: `${piece.size}px`,
-            height: `${piece.size}px`,
-            backgroundColor: piece.color,
-            transform: `rotate(${piece.rotation}deg)`,
-            animationDelay: `${piece.delay}s`,
-            animationDuration: `${piece.duration}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
 }
 
 /**
