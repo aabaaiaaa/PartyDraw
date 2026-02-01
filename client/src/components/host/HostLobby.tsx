@@ -98,11 +98,10 @@ function PlayerCard({ player, index }: { player: Player; index: number }) {
         delay: index * 0.1,
       }}
       layout
-      className={`flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 lg:px-5 lg:py-4 rounded-lg sm:rounded-xl transition-colors duration-300 ${
-        player.isReady
+      className={`flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 lg:px-5 lg:py-4 rounded-lg sm:rounded-xl transition-colors duration-300 ${player.isReady
           ? 'bg-green-50 border-2 border-green-400 shadow-md shadow-green-100'
           : 'bg-gray-50 border-2 border-gray-200'
-      }`}
+        }`}
     >
       <PlayerAvatar
         name={player.name}
@@ -115,9 +114,8 @@ function PlayerCard({ player, index }: { player: Player; index: number }) {
           initial={false}
           animate={player.isReady ? { scale: [1, 1.1, 1] } : {}}
           transition={{ duration: 0.3 }}
-          className={`text-xs sm:text-sm lg:text-base ${
-            player.isReady ? 'text-green-600' : 'text-gray-500'
-          }`}
+          className={`text-xs sm:text-sm lg:text-base ${player.isReady ? 'text-green-600' : 'text-gray-500'
+            }`}
         >
           {player.isReady ? 'Ready!' : 'Getting ready...'}
         </motion.p>
@@ -176,7 +174,7 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
         <div className="mt-4 sm:mt-6 lg:mt-8">
           <p className="text-gray-600 text-xs sm:text-sm lg:text-base mb-1">Or enter this code:</p>
           <div className="bg-purple-100 rounded-lg sm:rounded-xl px-4 py-2 sm:px-6 sm:py-3 lg:px-8 lg:py-4 border-2 border-purple-300">
-            <p className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-[0.2em] sm:tracking-[0.3em] text-purple-700">
+            <p data-testid="room-code" className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-[0.2em] sm:tracking-[0.3em] text-purple-700">
               {roomCode}
             </p>
           </div>
@@ -196,11 +194,10 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
           </h3>
           {players.length > 0 && (
             <span
-              className={`text-xs sm:text-sm lg:text-base font-medium px-2 py-0.5 sm:px-3 sm:py-1 rounded-full ${
-                allReady
+              className={`text-xs sm:text-sm lg:text-base font-medium px-2 py-0.5 sm:px-3 sm:py-1 rounded-full ${allReady
                   ? 'bg-green-100 text-green-700'
                   : 'bg-yellow-100 text-yellow-700'
-              }`}
+                }`}
             >
               {allReady
                 ? 'All ready!'

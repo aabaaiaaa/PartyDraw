@@ -32,11 +32,9 @@ async function waitForGameStatus(page: Page, status: string, timeout = 30000): P
 
 // Helper to wait for room code to appear on host screen
 async function getRoomCode(hostPage: Page): Promise<string> {
-  // Wait for room code to appear in the UI
-  await hostPage.waitForSelector('text=/[A-Z0-9]{6}/', { timeout: 10000 });
-
-  // Extract the room code from the header or lobby display
-  const roomCodeElement = await hostPage.locator('.text-4xl.font-bold.tracking-\\[0\\.3em\\]').first();
+  // Wait for room code element to appear
+  const roomCodeElement = hostPage.locator('[data-testid="room-code"]');
+  await roomCodeElement.waitFor({ state: 'visible', timeout: 10000 });
   const roomCode = await roomCodeElement.textContent();
 
   if (!roomCode || roomCode.length !== 6) {
@@ -80,13 +78,17 @@ async function simulateDrawing(page: Page): Promise<void> {
 
 // Helper to submit a drawing
 async function submitDrawing(page: Page): Promise<void> {
-  // Wait for submit button to be enabled (after drawing)
-  const submitButton = page.getByRole('button', { name: /submit drawing/i });
+  // Wait for submit button to be enabled (after drawing) - button text is just "Submit"
+  const submitButton = page.getByRole('button', { name: /^Submit$/i });
   await expect(submitButton).toBeEnabled({ timeout: 5000 });
   await submitButton.click();
 
-  // Wait for submission confirmation
-  await page.waitForSelector('text=/Drawing Submitted/i', { timeout: 5000 });
+  // Wait for submission confirmation OR voting phase (in case all players submitted)
+  // When last player submits, game immediately transitions to voting
+  await Promise.race([
+    page.waitForSelector('text=/Drawing Submitted/i', { timeout: 5000 }),
+    page.waitForSelector('text=/Vote for your favorite/i', { timeout: 5000 }),
+  ]);
 }
 
 // Helper to vote for a drawing (vote for the first available drawing that's not own)
@@ -110,8 +112,12 @@ async function voteForDrawing(page: Page): Promise<void> {
     await confirmButton.click();
   }
 
-  // Wait for vote confirmation
-  await page.waitForSelector('text=/Vote Cast!/i', { timeout: 5000 });
+  // Wait for vote confirmation OR results phase (in case all players voted)
+  // When last player votes, game immediately transitions to results
+  await Promise.race([
+    page.waitForSelector('text=/Vote Cast!/i', { timeout: 5000 }),
+    page.waitForSelector('text=/Results/i', { timeout: 5000 }),
+  ]);
 }
 
 // Helper to wait for a specific round
@@ -235,8 +241,8 @@ test.describe('Full Game Flow E2E', () => {
     // Wait for countdown to start
     await waitForGameStatus(hostPage, 'countdown', 15000);
 
-    // Verify countdown is visible on host
-    await expect(hostPage.locator('text=/[3-1]/').first()).toBeVisible({ timeout: 10000 });
+    // Verify countdown is visible on host (looking for numbers 1, 2, or 3)
+    await expect(hostPage.locator('text=/[1-3]/').first()).toBeVisible({ timeout: 10000 });
 
     // Verify players see "Get Ready!"
     await expect(player1Page.locator('text=/Get Ready!/i')).toBeVisible({ timeout: 10000 });
@@ -273,17 +279,15 @@ test.describe('Full Game Flow E2E', () => {
       await submitDrawing(player2Page);
       console.log(`Round ${round}: Player 2 submitted drawing`);
 
-      // Verify host shows all submitted
-      await expect(hostPage.locator('text=/2.*2.*submitted/i')).toBeVisible({ timeout: 10000 });
-
       // ==================== VOTING PHASE ====================
+      // Note: Game transitions to voting immediately after all players submit
       console.log(`Round ${round}: Voting phase`);
 
       // Wait for voting phase
       await waitForGameStatus(hostPage, 'voting', 30000);
 
       // Verify host shows drawing gallery
-      await expect(hostPage.locator('text=/Cast your votes!/i')).toBeVisible({ timeout: 10000 });
+      await expect(hostPage.locator('text=/Vote Now!/i')).toBeVisible({ timeout: 10000 });
 
       // Players vote for each other's drawings
       console.log(`Round ${round}: Players voting...`);

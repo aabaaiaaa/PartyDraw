@@ -153,6 +153,10 @@ function QuestionDisplay({
           <span className="text-base sm:text-xl lg:text-2xl font-bold text-purple-700">
             {submittedCount} / {totalPlayers}
           </span>
+          {/* Active player count for e2e testing */}
+          <span data-testid="active-player-count" className="sr-only">
+            Active players: {totalPlayers}
+          </span>
         </div>
 
         {/* Progress bar */}

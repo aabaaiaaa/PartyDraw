@@ -13,8 +13,9 @@ import { test, expect, Page, BrowserContext } from '@playwright/test';
 // Test configuration
 const CLIENT_URL = 'http://localhost:5175';
 
-// Reconnection timeout from server (matches RECONNECTION_TIMEOUT_MS in socket/index.ts)
-const RECONNECTION_TIMEOUT_MS = 10000;
+// Reconnection timeout - matches RECONNECTION_TIMEOUT_MS env var set in playwright.config.ts
+// Using 2 seconds for faster e2e tests
+const RECONNECTION_TIMEOUT_MS = 2000;
 
 // Helper to wait for a socket event by checking page state
 async function waitForGameStatus(page: Page, status: string, timeout = 30000): Promise<void> {
@@ -30,11 +31,9 @@ async function waitForGameStatus(page: Page, status: string, timeout = 30000): P
 
 // Helper to wait for room code to appear on host screen
 async function getRoomCode(hostPage: Page): Promise<string> {
-  // Wait for room code to appear in the UI
-  await hostPage.waitForSelector('text=/[A-Z0-9]{6}/', { timeout: 10000 });
-
-  // Extract the room code from the header or lobby display
-  const roomCodeElement = await hostPage.locator('.text-4xl.font-bold.tracking-\\[0\\.3em\\]').first();
+  // Wait for room code element to appear
+  const roomCodeElement = hostPage.locator('[data-testid="room-code"]');
+  await roomCodeElement.waitFor({ state: 'visible', timeout: 10000 });
   const roomCode = await roomCodeElement.textContent();
 
   if (!roomCode || roomCode.length !== 6) {
@@ -68,13 +67,17 @@ async function simulateDrawing(page: Page): Promise<void> {
 
 // Helper to submit a drawing
 async function submitDrawing(page: Page): Promise<void> {
-  // Wait for submit button to be enabled (after drawing)
-  const submitButton = page.getByRole('button', { name: /submit drawing/i });
+  // Wait for submit button to be enabled (after drawing) - button text is just "Submit"
+  const submitButton = page.getByRole('button', { name: /^Submit$/i });
   await expect(submitButton).toBeEnabled({ timeout: 5000 });
   await submitButton.click();
 
-  // Wait for submission confirmation
-  await page.waitForSelector('text=/Drawing Submitted/i', { timeout: 5000 });
+  // Wait for submission confirmation OR voting phase (in case all players submitted)
+  // When last player submits, game immediately transitions to voting
+  await Promise.race([
+    page.waitForSelector('text=/Drawing Submitted/i', { timeout: 5000 }),
+    page.waitForSelector('text=/Vote for your favorite/i', { timeout: 5000 }),
+  ]);
 }
 
 // Helper to vote for a drawing (vote for the first available drawing that's not own)
@@ -219,19 +222,15 @@ test.describe('Player Disconnect E2E', () => {
     await player3Page.close();
     console.log('Player 3 disconnected');
 
-    // Wait for the server's disconnect timeout (10 seconds)
+    // Wait for the server's disconnect timeout
     // We need to wait for the player to be fully removed after the timeout
     console.log(`Waiting for disconnect timeout (${RECONNECTION_TIMEOUT_MS / 1000}s)...`);
 
     // Wait for player-left event to be processed (disconnect + timeout)
-    await hostPage.waitForFunction(
-      () => {
-        const playersText = document.body.textContent || '';
-        // Check if player count has decreased to 2
-        return /Players.*2.*8/i.test(playersText);
-      },
-      { timeout: RECONNECTION_TIMEOUT_MS + 5000 } // Add extra time for processing
-    );
+    // The active-player-count element shows current player count during gameplay
+    await hostPage.waitForSelector('[data-testid="active-player-count"]:has-text("Active players: 2")', {
+      timeout: RECONNECTION_TIMEOUT_MS + 5000 // Add extra time for processing
+    });
     console.log('Player 3 has been removed from room after disconnect timeout');
 
     // ==================== STEP 6: Remaining players continue game ====================
@@ -246,11 +245,8 @@ test.describe('Player Disconnect E2E', () => {
     await submitDrawing(player2Page);
     console.log('Player 2 submitted drawing');
 
-    // Verify submission count (should show 2/2 since player 3 is gone)
-    await expect(hostPage.locator('text=/2.*2.*submitted/i')).toBeVisible({ timeout: 10000 });
-    console.log('All remaining players submitted drawings');
-
     // ==================== STEP 7: Voting phase ====================
+    // Note: Game transitions to voting immediately after all players submit
     console.log('Step 7: Voting phase');
 
     await waitForGameStatus(hostPage, 'voting', 30000);
@@ -326,13 +322,10 @@ test.describe('Player Disconnect E2E', () => {
       await expect(p1.locator('canvas')).toBeVisible({ timeout: 5000 });
 
       // Wait for disconnect timeout
-      await host.waitForFunction(
-        () => {
-          const playersText = document.body.textContent || '';
-          return /Players.*1.*8/i.test(playersText);
-        },
-        { timeout: RECONNECTION_TIMEOUT_MS + 5000 }
-      );
+      // The active-player-count element shows current player count during gameplay
+      await host.waitForSelector('[data-testid="active-player-count"]:has-text("Active players: 1")', {
+        timeout: RECONNECTION_TIMEOUT_MS + 5000
+      });
 
       console.log('Player 2 removed after disconnect - notification test passed');
     } finally {

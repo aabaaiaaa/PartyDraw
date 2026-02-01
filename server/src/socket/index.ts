@@ -24,8 +24,12 @@ import {
 } from '../models/Game';
 import { timerService, TimerType } from '../services/TimerService';
 
-/** Reconnection timeout in milliseconds (10 seconds) */
-const RECONNECTION_TIMEOUT_MS = 10000;
+/** 
+ * Reconnection timeout in milliseconds
+ * Default is 10 seconds, can be overridden via RECONNECTION_TIMEOUT_MS env var
+ * (useful for faster e2e tests)
+ */
+const RECONNECTION_TIMEOUT_MS = parseInt(process.env.RECONNECTION_TIMEOUT_MS || '10000', 10);
 
 /** Map of player ID to their pending disconnect timeout */
 const pendingDisconnects: Map<string, NodeJS.Timeout> = new Map();
@@ -131,8 +135,7 @@ export function setupRoomHandlers(io: Server, socket: Socket): void {
       const { roomCode, playerName } = data;
 
       console.log(
-        `[room:join] Socket ${socket.id} joining room ${roomCode}${
-          playerName ? ` as "${playerName}"` : ''
+        `[room:join] Socket ${socket.id} joining room ${roomCode}${playerName ? ` as "${playerName}"` : ''
         }`
       );
 
@@ -1059,7 +1062,7 @@ function transitionToResultsPhase(io: Server, room: Room): void {
 
   console.log(
     `[transition] Round ${room.gameState.currentRound} results in room ${room.code}: ` +
-      `Winner(s): ${winnerInfo.map((w) => w.playerName).join(', ')}`
+    `Winner(s): ${winnerInfo.map((w) => w.playerName).join(', ')}`
   );
 
   // Emit round:results event to all players
@@ -1110,7 +1113,7 @@ function transitionToFinalPhase(io: Server, room: Room): void {
 
   console.log(
     `[transition] Game ended in room ${currentRoom.code}. ` +
-      `Winner: ${finalStandings[0]?.playerName || 'No winner'} with ${finalStandings[0]?.score || 0} points`
+    `Winner: ${finalStandings[0]?.playerName || 'No winner'} with ${finalStandings[0]?.score || 0} points`
   );
 
   // Emit game:end event to all players

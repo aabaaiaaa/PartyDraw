@@ -59,11 +59,15 @@ export default defineConfig({
   // Start server and client before running tests
   webServer: [
     {
-      // Server process
+      // Server process - use shorter reconnection timeout for faster tests
       command: 'npm run dev --workspace=server',
       port: 3001,
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
+      env: {
+        ...process.env,
+        RECONNECTION_TIMEOUT_MS: '2000', // 2 seconds for e2e tests instead of 10
+      },
     },
     {
       // Client process

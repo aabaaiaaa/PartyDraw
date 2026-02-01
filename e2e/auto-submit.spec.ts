@@ -30,13 +30,9 @@ async function waitForGameStatus(page: Page, status: string, timeout = 30000): P
 
 // Helper to wait for room code to appear on host screen
 async function getRoomCode(hostPage: Page): Promise<string> {
-  // Wait for room code to appear - look for "Or enter this code:" section
-  await hostPage.waitForSelector('text=/Or enter this code:/i', { timeout: 10000 });
-
-  // The room code is displayed in a paragraph after "Or enter this code:"
-  // Look for a 6-character alphanumeric string in the lobby area
-  const roomCodeElement = hostPage.locator('p').filter({ hasText: /^[A-Z0-9]{6}$/ }).first();
-  await roomCodeElement.waitFor({ state: 'visible', timeout: 5000 });
+  // Wait for room code element to appear
+  const roomCodeElement = hostPage.locator('[data-testid="room-code"]');
+  await roomCodeElement.waitFor({ state: 'visible', timeout: 10000 });
   const roomCode = await roomCodeElement.textContent();
 
   if (!roomCode || roomCode.length !== 6) {
@@ -129,143 +125,143 @@ test.describe('Auto-Submit E2E', () => {
     const player2Page = await player2Context.newPage();
 
     try {
-    // ==================== STEP 1: Host creates room ====================
-    console.log('Step 1: Host creates room');
+      // ==================== STEP 1: Host creates room ====================
+      console.log('Step 1: Host creates room');
 
-    await hostPage.goto(`${CLIENT_URL}?sharedDeviceId=host-autosubmit-test`);
-    await hostPage.waitForSelector('text=/Join the Game!/i', { timeout: 15000 });
+      await hostPage.goto(`${CLIENT_URL}?sharedDeviceId=host-autosubmit-test`);
+      await hostPage.waitForSelector('text=/Join the Game!/i', { timeout: 15000 });
 
-    const roomCode = await getRoomCode(hostPage);
-    console.log(`Room created with code: ${roomCode}`);
+      const roomCode = await getRoomCode(hostPage);
+      console.log(`Room created with code: ${roomCode}`);
 
-    await waitForGameStatus(hostPage, 'lobby');
+      await waitForGameStatus(hostPage, 'lobby');
 
-    // ==================== STEP 2: Two players join room ====================
-    console.log('Step 2: Two players join room');
+      // ==================== STEP 2: Two players join room ====================
+      console.log('Step 2: Two players join room');
 
-    await joinPlayer(player1Page, roomCode, 'player1-autosubmit-test');
-    await joinPlayer(player2Page, roomCode, 'player2-autosubmit-test');
+      await joinPlayer(player1Page, roomCode, 'player1-autosubmit-test');
+      await joinPlayer(player2Page, roomCode, 'player2-autosubmit-test');
 
-    // Verify host shows 2 players
-    await expect(hostPage.locator('text=/Players.*2.*8/i')).toBeVisible({ timeout: 5000 });
-    console.log('Both players joined');
+      // Verify host shows 2 players
+      await expect(hostPage.locator('text=/Players.*2.*8/i')).toBeVisible({ timeout: 5000 });
+      console.log('Both players joined');
 
-    // ==================== STEP 3: All players mark ready ====================
-    console.log('Step 3: All players mark ready');
+      // ==================== STEP 3: All players mark ready ====================
+      console.log('Step 3: All players mark ready');
 
-    await markPlayerReady(player1Page);
-    await markPlayerReady(player2Page);
+      await markPlayerReady(player1Page);
+      await markPlayerReady(player2Page);
 
-    // Wait for host to show "All ready!"
-    await expect(hostPage.locator('text=/All ready!/i')).toBeVisible({ timeout: 10000 });
-    console.log('All players ready');
+      // Wait for host to show "All ready!"
+      await expect(hostPage.locator('text=/All ready!/i')).toBeVisible({ timeout: 10000 });
+      console.log('All players ready');
 
-    // ==================== STEP 4: Host starts game ====================
-    console.log('Step 4: Host starts game');
+      // ==================== STEP 4: Host starts game ====================
+      console.log('Step 4: Host starts game');
 
-    // Wait for Start Game button to be visible (all ready + enough players)
-    const startGameButton = hostPage.getByRole('button', { name: /Start Game/i });
-    await expect(startGameButton).toBeVisible({ timeout: 10000 });
+      // Wait for Start Game button to be visible (all ready + enough players)
+      const startGameButton = hostPage.getByRole('button', { name: /Start Game/i });
+      await expect(startGameButton).toBeVisible({ timeout: 10000 });
 
-    // Click the Start Game button
-    await startGameButton.click();
-    console.log('Start Game button clicked');
+      // Click the Start Game button
+      await startGameButton.click();
+      console.log('Start Game button clicked');
 
-    // Wait for countdown to start
-    await waitForGameStatus(hostPage, 'countdown', 15000);
+      // Wait for countdown to start
+      await waitForGameStatus(hostPage, 'countdown', 15000);
 
-    // Verify countdown is visible on host (look for numbers 3, 2, or 1)
-    await expect(hostPage.locator('text=/[123]/').first()).toBeVisible({ timeout: 10000 });
+      // Verify countdown is visible on host (look for numbers 3, 2, or 1)
+      await expect(hostPage.locator('text=/[123]/').first()).toBeVisible({ timeout: 10000 });
 
-    // Verify players see "Get Ready!"
-    await expect(player1Page.locator('text=/Get Ready!/i')).toBeVisible({ timeout: 10000 });
-    await expect(player2Page.locator('text=/Get Ready!/i')).toBeVisible({ timeout: 10000 });
-    console.log('Countdown started');
+      // Verify players see "Get Ready!"
+      await expect(player1Page.locator('text=/Get Ready!/i')).toBeVisible({ timeout: 10000 });
+      await expect(player2Page.locator('text=/Get Ready!/i')).toBeVisible({ timeout: 10000 });
+      console.log('Countdown started');
 
-    // Wait for countdown to finish and drawing phase to start
-    await waitForGameStatus(hostPage, 'drawing', 30000);
-    console.log('Game started, drawing phase begun');
+      // Wait for countdown to finish and drawing phase to start
+      await waitForGameStatus(hostPage, 'drawing', 30000);
+      console.log('Game started, drawing phase begun');
 
-    // Verify players have canvas
-    await expect(player1Page.locator('canvas')).toBeVisible({ timeout: 10000 });
-    await expect(player2Page.locator('canvas')).toBeVisible({ timeout: 10000 });
+      // Verify players have canvas
+      await expect(player1Page.locator('canvas')).toBeVisible({ timeout: 10000 });
+      await expect(player2Page.locator('canvas')).toBeVisible({ timeout: 10000 });
 
-    // ==================== STEP 5: Only player 1 submits drawing ====================
-    console.log('Step 5: Player 1 draws and submits, Player 2 does NOT submit');
+      // ==================== STEP 5: Only player 1 submits drawing ====================
+      console.log('Step 5: Player 1 draws and submits, Player 2 does NOT submit');
 
-    // Verify players have canvas
-    await expect(player1Page.locator('canvas')).toBeVisible({ timeout: 10000 });
-    await expect(player2Page.locator('canvas')).toBeVisible({ timeout: 10000 });
-    console.log('Both players have canvas visible');
+      // Verify players have canvas
+      await expect(player1Page.locator('canvas')).toBeVisible({ timeout: 10000 });
+      await expect(player2Page.locator('canvas')).toBeVisible({ timeout: 10000 });
+      console.log('Both players have canvas visible');
 
-    // Player 1 draws and submits
-    await simulateDrawing(player1Page);
-    await submitDrawing(player1Page);
-    console.log('Player 1 submitted drawing');
+      // Player 1 draws and submits
+      await simulateDrawing(player1Page);
+      await submitDrawing(player1Page);
+      console.log('Player 1 submitted drawing');
 
-    // Player 2 DOES NOT submit - just draw something but don't click submit
-    await simulateDrawing(player2Page);
-    console.log('Player 2 drew but did NOT submit - waiting for timer to expire');
+      // Player 2 DOES NOT submit - just draw something but don't click submit
+      await simulateDrawing(player2Page);
+      console.log('Player 2 drew but did NOT submit - waiting for timer to expire');
 
-    // Verify host shows only 1 player submitted (format: "1 / 2")
-    await expect(hostPage.locator('text=/1\\s*\\/\\s*2/')).toBeVisible({ timeout: 5000 });
-    console.log('Host shows 1 / 2 submitted');
+      // Verify host shows only 1 player submitted (format: "1 / 2")
+      await expect(hostPage.locator('text=/1\\s*\\/\\s*2/')).toBeVisible({ timeout: 5000 });
+      console.log('Host shows 1 / 2 submitted');
 
-    // ==================== STEP 6: Wait for timer to expire and auto-submit ====================
-    console.log('Step 6: Waiting for drawing timer to expire (auto-submit will trigger)...');
+      // ==================== STEP 6: Wait for timer to expire and auto-submit ====================
+      console.log('Step 6: Waiting for drawing timer to expire (auto-submit will trigger)...');
 
-    // The drawing timer is 20 seconds by default
-    // Wait for voting phase which starts after timer expires and auto-submit happens
-    await waitForGameStatus(hostPage, 'voting', 35000);
-    console.log('Drawing timer expired, voting phase started');
+      // The drawing timer is 20 seconds by default
+      // Wait for voting phase which starts after timer expires and auto-submit happens
+      await waitForGameStatus(hostPage, 'voting', 35000);
+      console.log('Drawing timer expired, voting phase started');
 
-    // ==================== STEP 7: Verify both drawings appear in voting gallery ====================
-    console.log('Step 7: Verify both drawings appear in voting gallery');
+      // ==================== STEP 7: Verify both drawings appear in voting gallery ====================
+      console.log('Step 7: Verify both drawings appear in voting gallery');
 
-    // Host should show drawing gallery with 2 drawings (text is "Vote Now!")
-    await expect(hostPage.locator('text=/Vote Now!/i')).toBeVisible({ timeout: 10000 });
+      // Host should show drawing gallery with 2 drawings (text is "Vote Now!")
+      await expect(hostPage.locator('text=/Vote Now!/i')).toBeVisible({ timeout: 10000 });
 
-    // Count the number of drawing images in the gallery
-    // The gallery should show 2 drawings (one submitted, one auto-submitted)
-    const drawingImages = hostPage.locator('[data-testid="drawing-gallery"] img, .drawing-gallery img, img[alt*="drawing" i]');
+      // Count the number of drawing images in the gallery
+      // The gallery should show 2 drawings (one submitted, one auto-submitted)
+      const drawingImages = hostPage.locator('[data-testid="drawing-gallery"] img, .drawing-gallery img, img[alt*="drawing" i]');
 
-    // Alternative: look for any images in the voting section that could be drawings
-    const galleryImages = hostPage.locator('img').filter({
-      has: hostPage.locator('xpath=ancestor::*[contains(@class, "gallery") or contains(@class, "voting") or contains(@class, "grid")]'),
-    });
+      // Alternative: look for any images in the voting section that could be drawings
+      const galleryImages = hostPage.locator('img').filter({
+        has: hostPage.locator('xpath=ancestor::*[contains(@class, "gallery") or contains(@class, "voting") or contains(@class, "grid")]'),
+      });
 
-    // Wait a moment for the gallery to fully render
-    await hostPage.waitForTimeout(1000);
+      // Wait a moment for the gallery to fully render
+      await hostPage.waitForTimeout(1000);
 
-    // Verify there are drawings displayed - check for images in the main content area
-    const allImages = await hostPage.locator('main img, [role="main"] img').count();
-    console.log(`Found ${allImages} images in main content area`);
+      // Verify there are drawings displayed - check for images in the main content area
+      const allImages = await hostPage.locator('main img, [role="main"] img').count();
+      console.log(`Found ${allImages} images in main content area`);
 
-    // Both players should have drawings in the gallery
-    // Verify by checking the voting interface on player screens
-    await expect(player1Page.locator('text=/Vote for your favorite/i')).toBeVisible({ timeout: 10000 });
-    await expect(player2Page.locator('text=/Vote for your favorite/i')).toBeVisible({ timeout: 10000 });
+      // Both players should have drawings in the gallery
+      // Verify by checking the voting interface on player screens
+      await expect(player1Page.locator('text=/Vote for your favorite/i')).toBeVisible({ timeout: 10000 });
+      await expect(player2Page.locator('text=/Vote for your favorite/i')).toBeVisible({ timeout: 10000 });
 
-    // Each player should see at least one drawing they can vote for (not their own)
-    // Player 1 should see Player 2's auto-submitted drawing
-    const player1VotableDrawings = player1Page.locator('button').filter({
-      has: player1Page.locator('img'),
-      hasNot: player1Page.locator('text=You'),
-    });
-    const player1VotableCount = await player1VotableDrawings.count();
-    console.log(`Player 1 can vote for ${player1VotableCount} drawing(s)`);
-    expect(player1VotableCount).toBeGreaterThanOrEqual(1);
+      // Each player should see at least one drawing they can vote for (not their own)
+      // Player 1 should see Player 2's auto-submitted drawing
+      const player1VotableDrawings = player1Page.locator('button').filter({
+        has: player1Page.locator('img'),
+        hasNot: player1Page.locator('text=You'),
+      });
+      const player1VotableCount = await player1VotableDrawings.count();
+      console.log(`Player 1 can vote for ${player1VotableCount} drawing(s)`);
+      expect(player1VotableCount).toBeGreaterThanOrEqual(1);
 
-    // Player 2 should see Player 1's manually submitted drawing
-    const player2VotableDrawings = player2Page.locator('button').filter({
-      has: player2Page.locator('img'),
-      hasNot: player2Page.locator('text=You'),
-    });
-    const player2VotableCount = await player2VotableDrawings.count();
-    console.log(`Player 2 can vote for ${player2VotableCount} drawing(s)`);
-    expect(player2VotableCount).toBeGreaterThanOrEqual(1);
+      // Player 2 should see Player 1's manually submitted drawing
+      const player2VotableDrawings = player2Page.locator('button').filter({
+        has: player2Page.locator('img'),
+        hasNot: player2Page.locator('text=You'),
+      });
+      const player2VotableCount = await player2VotableDrawings.count();
+      console.log(`Player 2 can vote for ${player2VotableCount} drawing(s)`);
+      expect(player2VotableCount).toBeGreaterThanOrEqual(1);
 
-    console.log('Both drawings (submitted and auto-submitted) appear in voting gallery - TEST PASSED!');
+      console.log('Both drawings (submitted and auto-submitted) appear in voting gallery - TEST PASSED!');
     } finally {
       await hostContext.close();
       await player1Context.close();

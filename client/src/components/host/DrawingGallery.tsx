@@ -254,6 +254,10 @@ function DrawingGallery({
             </>
           )}
         </span>
+        {/* Active player count for e2e testing */}
+        <span data-testid="active-player-count" className="sr-only">
+          Active players: {totalVoters}
+        </span>
       </motion.div>
 
       {/* Drawings grid with staggered reveal animation */}
