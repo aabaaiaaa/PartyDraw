@@ -11,6 +11,7 @@ import {
   removePlayerFromRoom,
   isRoomFull,
   RoomSettings,
+  createInitialGameState,
 } from '../models/Room';
 import { Player, createPlayer, getColorForPlayerIndex } from '../models/Player';
 import { generateUniqueRoomCode } from '../utils/roomCodeGenerator';
@@ -652,14 +653,7 @@ export class RoomService {
       ...room,
       status: 'lobby',
       players: newPlayers,
-      gameState: {
-        currentRound: 0,
-        question: null,
-        drawings: new Map(),
-        votes: new Map(),
-        phaseStartTime: null,
-        phaseEndTime: null,
-      },
+      gameState: createInitialGameState(),
     };
 
     this.rooms.set(roomId, resetRoom);

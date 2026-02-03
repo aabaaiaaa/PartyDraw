@@ -21,6 +21,14 @@ interface DrawingCanvasProps {
   hasSubmitted: boolean;
   /** Whether the drawing phase has ended (timer expired) - triggers auto-submit */
   drawingPhaseEnded?: boolean;
+  /** Callback to vote to skip the current question */
+  onVoteToSkip?: () => void;
+  /** Whether the current player has voted to skip */
+  hasVotedToSkip?: boolean;
+  /** Number of players who have voted to skip */
+  skipVoteCount?: number;
+  /** Number of votes needed to skip the question */
+  skipVoteThreshold?: number;
 }
 
 // Default drawing settings (will be controlled by DrawingControls in TASK-042)
@@ -33,6 +41,10 @@ function DrawingCanvas({
   onSubmit,
   hasSubmitted,
   drawingPhaseEnded = false,
+  onVoteToSkip,
+  hasVotedToSkip = false,
+  skipVoteCount = 0,
+  skipVoteThreshold = 0,
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -162,9 +174,10 @@ function DrawingCanvas({
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    // Set canvas size to match container
+    // Set canvas size based on container width - use width only since we want a square
     const rect = container.getBoundingClientRect();
-    const size = Math.min(rect.width, 400); // Max 400px for reasonable drawing size
+    // Use nearly full width on phones, cap at reasonable max for larger screens
+    const size = Math.min(rect.width - 8, 500); // Small margin, larger max
     canvas.width = size;
     canvas.height = size;
 
@@ -273,6 +286,25 @@ function DrawingCanvas({
       <div className="text-center mb-2 sm:mb-3 flex-shrink-0">
         <h2 className="text-sm sm:text-lg font-bold text-teal-800">Draw:</h2>
         <p className="text-base sm:text-xl font-semibold text-purple-600 mb-1 sm:mb-2 line-clamp-2">{question}</p>
+
+        {/* Skip Question Button */}
+        {onVoteToSkip && (
+          <button
+            onClick={onVoteToSkip}
+            disabled={hasVotedToSkip}
+            className={`text-xs sm:text-sm px-2 py-0.5 sm:px-3 sm:py-1 rounded-full mb-1 sm:mb-2 transition-colors ${
+              hasVotedToSkip
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-100 text-orange-700 hover:bg-orange-200 active:bg-orange-300'
+            }`}
+          >
+            {hasVotedToSkip ? (
+              <>Voted to Skip {skipVoteThreshold > 0 && `(${skipVoteCount}/${skipVoteThreshold})`}</>
+            ) : (
+              <>Skip Question? {skipVoteThreshold > 0 && `(${skipVoteCount}/${skipVoteThreshold})`}</>
+            )}
+          </button>
+        )}
 
         {/* Timer */}
         {timerSeconds !== null && (

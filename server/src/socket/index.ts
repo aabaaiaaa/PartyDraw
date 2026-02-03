@@ -13,6 +13,7 @@ import {
   haveAllPlayersSubmittedDrawings,
   castVote,
   haveAllPlayersVoted,
+  getActivePlayerCount,
 } from '../models/Room';
 import { Player, updateHeartbeat } from '../models/Player';
 import {
@@ -23,6 +24,7 @@ import {
   getNextStateAfterResults,
 } from '../models/Game';
 import { timerService, TimerType } from '../services/TimerService';
+import { getRandomQuestion } from '../utils/questionBank';
 
 /** 
  * Reconnection timeout in milliseconds
@@ -52,6 +54,7 @@ function serializeRoom(room: Room): object {
       votes: Array.from(room.gameState.votes.entries()),
       phaseStartTime: room.gameState.phaseStartTime,
       phaseEndTime: room.gameState.phaseEndTime,
+      skipVotes: Array.from(room.gameState.skipVotes),
     },
     settings: room.settings,
     createdAt: room.createdAt,
@@ -627,23 +630,28 @@ export function setupPlayerHandlers(io: Server, socket: Socket): void {
 }
 
 /**
- * Temporary placeholder questions for game rounds
- * TODO: Replace with questionBank.ts when TASK-016 is implemented
+ * Selects a random question, avoiding recently used questions in the current game session
+ * @param room - The room to get a question for
+ * @returns The selected question text
  */
-const TEMP_QUESTIONS = [
-  'A cat riding a bicycle',
-  'A happy cloud',
-  'A robot eating pizza',
-  'A superhero penguin',
-  'A dancing tree',
-  'A spaceship made of cheese',
-];
+function selectRandomQuestion(room: Room): string {
+  const questionResult = getRandomQuestion(room.gameState.usedQuestionIds);
 
-/**
- * Gets a random question from the temporary question bank
- */
-function getRandomQuestion(): string {
-  return TEMP_QUESTIONS[Math.floor(Math.random() * TEMP_QUESTIONS.length)];
+  if (!questionResult) {
+    // All questions used - reset the set and try again
+    console.log(`[question] All questions used in room ${room.code}, resetting question pool`);
+    room.gameState.usedQuestionIds.clear();
+    const fallbackQuestion = getRandomQuestion(room.gameState.usedQuestionIds);
+    const text = fallbackQuestion?.text || 'Draw a happy cloud'; // Ultimate fallback
+    if (fallbackQuestion) {
+      room.gameState.usedQuestionIds.add(fallbackQuestion.id);
+    }
+    return text;
+  }
+
+  // Track this question as used
+  room.gameState.usedQuestionIds.add(questionResult.id);
+  return questionResult.text;
 }
 
 /**
@@ -704,8 +712,11 @@ export function setupGameHandlers(io: Server, socket: Socket): void {
       count: 3,
     });
 
-    // Start the countdown timer (3 seconds)
-    timerService.startCountdown(room.id, 3);
+    // Start the countdown timer after a small delay to allow clients to render
+    // This prevents the timer from ticking down before the client displays the initial value
+    setTimeout(() => {
+      timerService.startCountdown(room.id, 3);
+    }, 200);
 
     if (callback) {
       callback({
@@ -908,6 +919,158 @@ export function setupDrawingHandlers(io: Server, socket: Socket): void {
 }
 
 /**
+ * Handles skipping the current question during drawing phase
+ * Called when majority of players vote to skip
+ * @param io - The Socket.IO server instance
+ * @param room - The room where the question is being skipped
+ */
+function handleQuestionSkip(io: Server, room: Room): void {
+  console.log(`[question:skip] Skipping question in room ${room.code}`);
+
+  // Clear the drawing timer
+  timerService.clearTimer(room.id);
+
+  // Select a new question (the old question ID was already added to usedQuestionIds)
+  const newQuestion = selectRandomQuestion(room);
+
+  // Reset the round state with the new question (keeps same round number)
+  const now = Date.now();
+  const newGameState = resetGameStateForNewRound(
+    room.gameState,
+    room.gameState.currentRound,
+    newQuestion
+  );
+  newGameState.phaseStartTime = now;
+  newGameState.phaseEndTime = now + room.settings.drawingTime * 1000;
+
+  // Update room
+  const updatedRoom: Room = {
+    ...room,
+    gameState: newGameState,
+  };
+  roomService.updateRoom(updatedRoom);
+
+  console.log(
+    `[question:skip] New question in room ${room.code}: "${newQuestion}"`
+  );
+
+  // Broadcast question:skipped event to all players
+  io.to(room.id).emit('question:skipped', {
+    newQuestion,
+    round: room.gameState.currentRound,
+    duration: room.settings.drawingTime,
+  });
+
+  // Restart the drawing timer
+  setTimeout(() => {
+    timerService.startDrawingTimer(room.id, room.settings.drawingTime);
+  }, 200);
+}
+
+/**
+ * Sets up skip question socket event handlers
+ * @param io - The Socket.IO server instance
+ * @param socket - The connected socket
+ */
+export function setupSkipQuestionHandlers(io: Server, socket: Socket): void {
+  /**
+   * Handle question:vote-skip event
+   * Allows a player to vote to skip/replace the current question
+   */
+  socket.on('question:vote-skip', (callback?: (response: object) => void) => {
+    console.log(`[question:vote-skip] Socket ${socket.id} voting to skip question`);
+
+    // Get the room for this socket
+    const roomInfo = roomService.getRoomBySocket(socket.id);
+
+    if (!roomInfo) {
+      emitRoomError(socket, 'ROOM_NOT_FOUND', 'You are not in a room');
+      if (callback) {
+        callback({
+          success: false,
+          error: 'ROOM_NOT_FOUND',
+          message: 'You are not in a room',
+        });
+      }
+      return;
+    }
+
+    const { room, playerId } = roomInfo;
+
+    // Verify game is in drawing phase
+    if (room.status !== 'drawing') {
+      emitRoomError(socket, 'GAME_IN_PROGRESS', 'Not in drawing phase');
+      if (callback) {
+        callback({
+          success: false,
+          error: 'WRONG_PHASE',
+          message: 'Cannot vote to skip outside of drawing phase',
+        });
+      }
+      return;
+    }
+
+    // Check if player already voted to skip
+    if (room.gameState.skipVotes.has(playerId)) {
+      if (callback) {
+        callback({
+          success: false,
+          error: 'ALREADY_VOTED',
+          message: 'You have already voted to skip',
+        });
+      }
+      return;
+    }
+
+    // Add the skip vote
+    const newSkipVotes = new Set(room.gameState.skipVotes);
+    newSkipVotes.add(playerId);
+
+    const updatedRoom: Room = {
+      ...room,
+      gameState: {
+        ...room.gameState,
+        skipVotes: newSkipVotes,
+      },
+    };
+    roomService.updateRoom(updatedRoom);
+
+    const skipVoteCount = newSkipVotes.size;
+    const activePlayerCount = getActivePlayerCount(updatedRoom);
+    const threshold = Math.floor(activePlayerCount / 2) + 1; // >50% = majority
+
+    console.log(
+      `[question:vote-skip] Skip vote received in room ${room.code} (${skipVoteCount}/${activePlayerCount}, threshold: ${threshold})`
+    );
+
+    // Broadcast skip vote received to all players
+    io.to(room.id).emit('question:skip-vote-received', {
+      playerId,
+      skipVoteCount,
+      totalActivePlayers: activePlayerCount,
+      threshold,
+    });
+
+    // Check if threshold is reached
+    if (skipVoteCount >= threshold) {
+      console.log(
+        `[question:vote-skip] Skip threshold reached in room ${room.code}, replacing question`
+      );
+      handleQuestionSkip(io, updatedRoom);
+    }
+
+    if (callback) {
+      callback({
+        success: true,
+        skipVoteCount,
+        totalActivePlayers: activePlayerCount,
+        threshold,
+      });
+    }
+  });
+}
+
+/**
  * Calculates the vote count for each player
  * @param votes - Map of voter ID to voted-for player ID
  * @returns Map of player ID to vote count
@@ -1032,8 +1195,11 @@ function transitionToVotingPhase(io: Server, room: Room): void {
     duration: room.settings.votingTime,
   });
 
-  // Start the voting timer
-  timerService.startVotingTimer(room.id, room.settings.votingTime);
+  // Start the voting timer after a small delay to allow clients to render
+  // This prevents the timer from ticking down before the client displays the initial value
+  setTimeout(() => {
+    timerService.startVotingTimer(room.id, room.settings.votingTime);
+  }, 200);
 }
 
 /**
@@ -1217,7 +1383,7 @@ function startNextRound(io: Server, room: Room): void {
 
   // Prepare for next round
   const nextRound = currentRoom.gameState.currentRound + 1;
-  const question = getRandomQuestion();
+  const question = selectRandomQuestion(currentRoom);
 
   // Reset game state for new round
   const newGameState = resetGameStateForNewRound(currentRoom.gameState, nextRound, question);
@@ -1276,7 +1442,7 @@ function handleTimerExpired(io: Server, roomId: string, timerType: TimerType): v
 
     // Prepare for first round
     const currentRound = room.gameState.currentRound + 1;
-    const question = getRandomQuestion();
+    const question = selectRandomQuestion(room);
 
     // Reset game state for new round
     const newGameState = resetGameStateForNewRound(room.gameState, currentRound, question);
@@ -1304,8 +1470,11 @@ function handleTimerExpired(io: Server, roomId: string, timerType: TimerType): v
       duration: room.settings.drawingTime,
     });
 
-    // Start the drawing timer
-    timerService.startDrawingTimer(roomId, room.settings.drawingTime);
+    // Start the drawing timer after a small delay to allow clients to render
+    // This prevents the timer from ticking down before the client displays the initial value
+    setTimeout(() => {
+      timerService.startDrawingTimer(roomId, room.settings.drawingTime);
+    }, 200);
   }
 
   if (timerType === 'drawing') {
@@ -1517,6 +1686,9 @@ export function initializeSocketHandlers(io: Server): void {
 
     // Set up drawing handlers
     setupDrawingHandlers(io, socket);
+
+    // Set up skip question handlers
+    setupSkipQuestionHandlers(io, socket);
 
     // Set up voting handlers
     setupVotingHandlers(io, socket);

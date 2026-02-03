@@ -175,13 +175,13 @@ function Countdown({ count, onTick, onComplete }: CountdownProps) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[300px]">
+    <div className="flex flex-col items-center justify-center h-full">
       {/* "Get Ready!" header */}
       <motion.p
         key={`header-${count}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-3xl font-bold text-purple-700 mb-8"
+        className="text-[clamp(1.5rem,4vh,3rem)] font-bold text-purple-700 mb-[clamp(1rem,3vh,2rem)]"
       >
         <motion.span
           animate={{ scale: [1, 1.1, 1] }}
@@ -204,9 +204,9 @@ function Countdown({ count, onTick, onComplete }: CountdownProps) {
           animate="animate"
           className={`
             relative flex items-center justify-center
-            w-64 h-64 rounded-full
+            w-[min(256px,45vh)] h-[min(256px,45vh)] rounded-full
             bg-white/50 backdrop-blur-sm
-            ring-8 ${colors.ring}
+            ring-[clamp(4px,1vh,8px)] ${colors.ring}
             shadow-2xl ${colors.glow}
           `}
         >
@@ -219,7 +219,7 @@ function Countdown({ count, onTick, onComplete }: CountdownProps) {
               animate="animate"
               exit="exit"
               className={`
-                text-[10rem] font-black leading-none
+                text-[clamp(4rem,15vh,10rem)] font-black leading-none
                 ${colors.text}
                 drop-shadow-lg
               `}
@@ -240,7 +240,7 @@ function Countdown({ count, onTick, onComplete }: CountdownProps) {
             initial="initial"
             animate="animate"
             className={`
-              absolute w-72 h-72 rounded-full
+              absolute w-[min(288px,50vh)] h-[min(288px,50vh)] rounded-full
               border-4 ${colors.ring.replace('ring-', 'border-')}
             `}
           />
@@ -251,7 +251,7 @@ function Countdown({ count, onTick, onComplete }: CountdownProps) {
             animate="animate"
             transition={{ delay: 0.15 }}
             className={`
-              absolute w-72 h-72 rounded-full
+              absolute w-[min(288px,50vh)] h-[min(288px,50vh)] rounded-full
               border-4 ${colors.ring.replace('ring-', 'border-')}
             `}
           />

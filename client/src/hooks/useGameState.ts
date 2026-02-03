@@ -82,6 +82,7 @@ export interface SerializedGameState {
   votes: Array<[string, string]>;
   phaseStartTime: number | null;
   phaseEndTime: number | null;
+  skipVotes?: string[];
 }
 
 /**
@@ -154,6 +155,12 @@ export interface GameState {
   finalWinner: ScoreEntry | null;
   /** Last error message */
   error: string | null;
+  /** Number of players who have voted to skip the current question */
+  skipVoteCount: number;
+  /** Number of votes needed to skip the question (majority threshold) */
+  skipVoteThreshold: number;
+  /** Whether the current player has voted to skip */
+  hasVotedToSkip: boolean;
 }
 
 /**
@@ -186,6 +193,9 @@ const initialGameState: GameState = {
   finalStandings: [],
   finalWinner: null,
   error: null,
+  skipVoteCount: 0,
+  skipVoteThreshold: 0,
+  hasVotedToSkip: false,
 };
 
 /**
@@ -216,6 +226,8 @@ export interface UseGameStateReturn {
   resetState: () => void;
   /** Reset game for "Play Again" while keeping same room */
   resetGame: () => void;
+  /** Vote to skip/replace the current question */
+  voteToSkipQuestion: () => void;
 }
 
 /**
@@ -381,10 +393,6 @@ export function useGameState(): UseGameStateReturn {
       });
     };
 
-    // Countdown tick
-    const handleCountdownTick = (data: { count: number }) => {
-      updateState({ countdownValue: data.count });
-    };
 
     // Round started
     const handleRoundStart = (data: {
@@ -409,12 +417,20 @@ export function useGameState(): UseGameStateReturn {
         votedCount: 0,
         voteResults: [],
         winners: [],
+        skipVoteCount: 0,
+        skipVoteThreshold: 0,
+        hasVotedToSkip: false,
       });
     };
 
     // Timer tick
     const handleTimerTick = (data: { type: string; secondsRemaining: number; roomId: string }) => {
-      updateState({ timerSeconds: data.secondsRemaining });
+      // Update countdownValue for countdown timers, timerSeconds for drawing/voting timers
+      if (data.type === 'countdown') {
+        updateState({ countdownValue: data.secondsRemaining });
+      } else {
+        updateState({ timerSeconds: data.secondsRemaining });
+      }
     };
 
     // ============ Drawing Events ============
@@ -443,6 +459,44 @@ export function useGameState(): UseGameStateReturn {
       // Signal that the drawing phase has ended - client should auto-submit
       // The drawingPhaseEnded flag will trigger auto-submit in DrawingCanvas
       updateState({ drawingPhaseEnded: true });
+    };
+
+    // ============ Skip Question Events ============
+
+    // Skip vote received
+    const handleSkipVoteReceived = (data: {
+      playerId: string;
+      skipVoteCount: number;
+      totalActivePlayers: number;
+      threshold: number;
+    }) => {
+      setGameState((prev) => ({
+        ...prev,
+        skipVoteCount: data.skipVoteCount,
+        skipVoteThreshold: data.threshold,
+        hasVotedToSkip: prev.hasVotedToSkip || data.playerId === prev.currentPlayer?.id,
+      }));
+    };
+
+    // Question skipped - reset drawing state with new question
+    const handleQuestionSkipped = (data: {
+      newQuestion: string;
+      round: number;
+      duration: number;
+    }) => {
+      console.log('[useGameState] Question skipped, new question:', data.newQuestion);
+      updateState({
+        question: data.newQuestion,
+        phaseDuration: data.duration,
+        timerSeconds: data.duration,
+        drawings: [],
+        submittedCount: 0,
+        hasSubmittedDrawing: false,
+        drawingPhaseEnded: false,
+        skipVoteCount: 0,
+        skipVoteThreshold: 0,
+        hasVotedToSkip: false,
+      });
     };
 
     // ============ Voting Events ============
@@ -574,12 +628,13 @@ export function useGameState(): UseGameStateReturn {
     socket.on('ready:all-ready', handleAllReady);
     socket.on('player:promoted', handlePlayerPromoted);
     socket.on('game:countdown', handleGameCountdown);
-    socket.on('countdown:tick', handleCountdownTick);
     socket.on('round:start', handleRoundStart);
     socket.on('timer:tick', handleTimerTick);
     socket.on('drawing:submitted', handleDrawingSubmitted);
     socket.on('drawing:all-submitted', handleAllDrawingsSubmitted);
     socket.on('round:drawing-phase-ended', handleDrawingPhaseEnded);
+    socket.on('question:skip-vote-received', handleSkipVoteReceived);
+    socket.on('question:skipped', handleQuestionSkipped);
     socket.on('round:voting-start', handleVotingStart);
     socket.on('vote:received', handleVoteReceived);
     socket.on('voting:all-voted', handleAllVoted);
@@ -600,12 +655,13 @@ export function useGameState(): UseGameStateReturn {
       socket.off('ready:all-ready', handleAllReady);
       socket.off('player:promoted', handlePlayerPromoted);
       socket.off('game:countdown', handleGameCountdown);
-      socket.off('countdown:tick', handleCountdownTick);
       socket.off('round:start', handleRoundStart);
       socket.off('timer:tick', handleTimerTick);
       socket.off('drawing:submitted', handleDrawingSubmitted);
       socket.off('drawing:all-submitted', handleAllDrawingsSubmitted);
       socket.off('round:drawing-phase-ended', handleDrawingPhaseEnded);
+      socket.off('question:skip-vote-received', handleSkipVoteReceived);
+      socket.off('question:skipped', handleQuestionSkipped);
       socket.off('round:voting-start', handleVotingStart);
       socket.off('vote:received', handleVoteReceived);
       socket.off('voting:all-voted', handleAllVoted);
@@ -699,6 +755,13 @@ export function useGameState(): UseGameStateReturn {
     emit('game:reset');
   }, [connected, emit, gameState.inRoom, gameState.status]);
 
+  const voteToSkipQuestion = useCallback(() => {
+    if (!connected || !gameState.inRoom || gameState.status !== 'drawing') return;
+    if (gameState.hasVotedToSkip) return;
+    emit('question:vote-skip');
+    updateState({ hasVotedToSkip: true });
+  }, [connected, emit, gameState.inRoom, gameState.status, gameState.hasVotedToSkip, updateState]);
+
   return {
     gameState,
     createRoom,
@@ -712,6 +775,7 @@ export function useGameState(): UseGameStateReturn {
     clearError,
     resetState,
     resetGame,
+    voteToSkipQuestion,
   };
 }
 

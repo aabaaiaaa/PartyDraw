@@ -65,10 +65,10 @@ describe('questionBank', () => {
       expect(count).toBe(questions.length);
     });
 
-    it('should return at least 20 questions (as per requirements)', () => {
+    it('should return at least 100 questions (as per requirements)', () => {
       const count = getQuestionCount();
 
-      expect(count).toBeGreaterThanOrEqual(20);
+      expect(count).toBeGreaterThanOrEqual(100);
     });
   });
 
@@ -434,7 +434,7 @@ describe('questionBank', () => {
         }
       }
 
-      // With 32 questions and 200 picks, most questions should be selected at least once
+      // With 100 questions and 200 picks, most questions should be selected at least once
       expect(questionCounts.size).toBeGreaterThan(getQuestionCount() * 0.5);
     });
   });

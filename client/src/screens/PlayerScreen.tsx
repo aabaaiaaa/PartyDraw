@@ -293,6 +293,7 @@ function renderPlayerContent(
     castVote: (votedForId: string) => void;
     resetGame: () => void;
     startGame: () => void;
+    voteToSkipQuestion: () => void;
   }
 ) {
   // Not in a room - show join screen
@@ -366,6 +367,10 @@ function renderPlayerContent(
         onSubmit={actions.submitDrawing}
         hasSubmitted={gameState.hasSubmittedDrawing}
         drawingPhaseEnded={gameState.drawingPhaseEnded}
+        onVoteToSkip={actions.voteToSkipQuestion}
+        hasVotedToSkip={gameState.hasVotedToSkip}
+        skipVoteCount={gameState.skipVoteCount}
+        skipVoteThreshold={gameState.skipVoteThreshold}
       />
     );
   }
@@ -431,6 +436,7 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
     resetGame,
     startGame,
     clearError,
+    voteToSkipQuestion,
   } = useGameState();
 
   const { connectionState, connect } = useSocket();
@@ -443,6 +449,7 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
     castVote,
     resetGame,
     startGame,
+    voteToSkipQuestion,
   };
 
   return (
@@ -472,8 +479,8 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
       </header>
 
       {/* Main Content - optimized for phone screens with safe area padding */}
-      <main className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-md w-full max-h-full overflow-y-auto">
+      <main className="flex-1 flex items-center justify-center p-2 sm:p-4 overflow-hidden min-h-0">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-md sm:max-w-lg lg:max-w-xl w-full h-full flex flex-col overflow-hidden">
           {/* Friendly error message display */}
           {gameState.error && (
             <div className="mb-3 sm:mb-4">
@@ -485,8 +492,10 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
             </div>
           )}
 
-          {/* Game content based on status */}
-          {renderPlayerContent(gameState, actions)}
+          {/* Game content based on status - flex-1 to fill available space */}
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            {renderPlayerContent(gameState, actions)}
+          </div>
         </div>
       </main>
 

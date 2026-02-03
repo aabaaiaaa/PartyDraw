@@ -111,6 +111,7 @@ function JoinScreen({ onJoin, error, isJoining = false }: JoinScreenProps) {
             spellCheck={false}
             className={`
               w-full text-center text-2xl sm:text-3xl font-mono tracking-[0.2em] sm:tracking-[0.3em] uppercase
+              text-gray-900
               border-2 rounded-lg px-3 py-3 sm:px-4 sm:py-4
               focus:outline-none transition-colors
               disabled:opacity-50 disabled:cursor-not-allowed

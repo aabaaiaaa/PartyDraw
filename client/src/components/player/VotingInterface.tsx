@@ -133,7 +133,7 @@ function VotingInterface({
 
       {/* Drawings Grid - Scrollable */}
       <div className="flex-1 overflow-y-auto -mx-1 sm:-mx-2 px-1 sm:px-2 min-h-0">
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 pb-2 sm:pb-3">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-3 pb-2 sm:pb-3">
           {drawings.map((drawing) => {
             const isOwnDrawing = drawing.playerId === currentPlayerId;
             const isSelected = selectedDrawing === drawing.playerId;
@@ -145,7 +145,7 @@ function VotingInterface({
                 key={drawing.playerId}
                 onClick={() => handleDrawingTap(drawing.playerId)}
                 disabled={isOwnDrawing}
-                className={`relative border-2 rounded-lg sm:rounded-xl p-1.5 sm:p-2 transition-all duration-200 ${
+                className={`relative border-2 rounded-lg sm:rounded-xl p-1 sm:p-1.5 md:p-2 transition-all duration-200 ${
                   isOwnDrawing
                     ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
                     : isSelected
@@ -180,7 +180,7 @@ function VotingInterface({
                 )}
 
                 {/* Drawing Preview */}
-                <div className="bg-white rounded sm:rounded-lg aspect-square mb-1 sm:mb-2 flex items-center justify-center overflow-hidden border border-gray-100">
+                <div className="bg-white rounded sm:rounded-lg aspect-square mb-0.5 sm:mb-1 md:mb-2 flex items-center justify-center overflow-hidden border border-gray-100">
                   {drawing.drawingData.startsWith('data:image') ? (
                     <img
                       src={drawing.drawingData}

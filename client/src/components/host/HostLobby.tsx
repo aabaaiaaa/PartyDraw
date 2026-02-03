@@ -160,7 +160,7 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
   const canStart = allReady && players.length >= 2;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 xl:gap-12 items-start h-full">
+    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 xl:gap-12 items-start h-full overflow-hidden">
       {/* Left side: QR Code and Room Code - scales for larger screens */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 xl:w-2/5">
         <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-purple-800 mb-2 sm:mb-4">
@@ -187,7 +187,7 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
       </div>
 
       {/* Right side: Player List */}
-      <div className="flex-1 w-full lg:w-2/3 xl:w-3/5">
+      <div className="flex-1 w-full lg:w-2/3 xl:w-3/5 min-h-0 flex flex-col">
         <div className="flex justify-between items-center mb-3 sm:mb-4">
           <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-800">
             Players ({players.length}/{maxPlayers})
@@ -223,7 +223,7 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 lg:gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 flex-1 min-h-0 overflow-y-auto pr-2 content-start"
             >
               <AnimatePresence>
                 {players.map((player, index) => (

@@ -32,6 +32,10 @@ export interface GameState {
   phaseStartTime: number | null;
   /** Timestamp when the current phase ends */
   phaseEndTime: number | null;
+  /** Set of question IDs that have been used in the current game session (to prevent repeats) */
+  usedQuestionIds: Set<string>;
+  /** Set of player IDs who have voted to skip the current question */
+  skipVotes: Set<string>;
 }
 
 /**
@@ -121,6 +125,8 @@ export function createInitialGameState(): GameState {
     votes: new Map(),
     phaseStartTime: null,
     phaseEndTime: null,
+    usedQuestionIds: new Set(),
+    skipVotes: new Set(),
   };
 }
 
@@ -144,6 +150,8 @@ export function resetGameStateForNewRound(
     votes: new Map(),
     phaseStartTime: null,
     phaseEndTime: null,
+    skipVotes: new Set(),
+    // Preserve usedQuestionIds across rounds in the same game
   };
 }
 
