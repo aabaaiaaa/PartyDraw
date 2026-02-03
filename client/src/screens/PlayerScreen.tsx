@@ -291,7 +291,8 @@ function renderPlayerContent(
     setReady: (ready: boolean) => void;
     submitDrawing: (data: string) => void;
     castVote: (votedForId: string) => void;
-    resetState: () => void;
+    resetGame: () => void;
+    startGame: () => void;
   }
 ) {
   // Not in a room - show join screen
@@ -316,6 +317,7 @@ function renderPlayerContent(
           players={gameState.players}
           currentPlayerId={gameState.currentPlayer.id}
           onCancelReady={() => actions.setReady(false)}
+          onStartGame={actions.startGame}
         />
       );
     }
@@ -403,7 +405,7 @@ function renderPlayerContent(
         winner={gameState.finalWinner}
         players={gameState.players}
         currentPlayerId={gameState.currentPlayer?.id}
-        onPlayAgain={actions.resetState}
+        onPlayAgain={actions.resetGame}
       />
     );
   }
@@ -426,7 +428,8 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
     setReady,
     submitDrawing,
     castVote,
-    resetState,
+    resetGame,
+    startGame,
     clearError,
   } = useGameState();
 
@@ -438,7 +441,8 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
     setReady,
     submitDrawing,
     castVote,
-    resetState,
+    resetGame,
+    startGame,
   };
 
   return (

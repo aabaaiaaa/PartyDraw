@@ -677,19 +677,6 @@ export function setupGameHandlers(io: Server, socket: Socket): void {
 
     const { room } = roomInfo;
 
-    // Verify this socket is the host
-    if (room.hostSocketId !== socket.id) {
-      emitRoomError(socket, 'PLAYER_NOT_FOUND', 'Only the host can start the game');
-      if (callback) {
-        callback({
-          success: false,
-          error: 'NOT_HOST',
-          message: 'Only the host can start the game',
-        });
-      }
-      return;
-    }
-
     // Validate transition to countdown
     try {
       transitionToCountdown(room);
@@ -724,6 +711,78 @@ export function setupGameHandlers(io: Server, socket: Socket): void {
       callback({
         success: true,
         status: 'countdown',
+      });
+    }
+  });
+
+  /**
+   * Handle game:reset event
+   * Resets the game for "Play Again" functionality while keeping the same room
+   */
+  socket.on('game:reset', (callback?: (response: object) => void) => {
+    console.log(`[game:reset] Socket ${socket.id} attempting to reset game`);
+
+    // Get the room for this socket
+    const roomInfo = roomService.getRoomBySocket(socket.id);
+
+    if (!roomInfo) {
+      emitRoomError(socket, 'ROOM_NOT_FOUND', 'You are not in a room');
+      if (callback) {
+        callback({
+          success: false,
+          error: 'ROOM_NOT_FOUND',
+          message: 'You are not in a room',
+        });
+      }
+      return;
+    }
+
+    const { room } = roomInfo;
+
+    // Verify game is in final state
+    if (room.status !== 'final') {
+      emitRoomError(socket, 'GAME_IN_PROGRESS', 'Can only reset game after it has ended');
+      if (callback) {
+        callback({
+          success: false,
+          error: 'WRONG_PHASE',
+          message: 'Can only reset game after it has ended',
+        });
+      }
+      return;
+    }
+
+    // Clear any active timers for this room
+    timerService.clearTimer(room.id);
+
+    // Reset the room
+    const result = roomService.resetRoom(room.id);
+
+    if (!result.success) {
+      emitRoomError(socket, result.error, result.message);
+      if (callback) {
+        callback({
+          success: false,
+          error: result.error,
+          message: result.message,
+        });
+      }
+      return;
+    }
+
+    const resetRoom = result.data;
+
+    console.log(`[game:reset] Game reset in room ${resetRoom.code}, returning to lobby`);
+
+    // Broadcast game:reset to all players in the room
+    io.to(room.id).emit('game:reset', {
+      room: serializeRoom(resetRoom),
+    });
+
+    if (callback) {
+      callback({
+        success: true,
+        room: serializeRoom(resetRoom),
       });
     }
   });

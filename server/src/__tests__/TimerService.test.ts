@@ -188,8 +188,8 @@ describe('TimerService', () => {
       vi.advanceTimersByTime(2000);
 
       // No more tick emissions after clearing
-      const tickCalls = mockIo.emit.mock.calls.filter(
-        (call: [string, unknown]) => call[0] === 'timer:tick'
+      const tickCalls = (mockIo.emit.mock.calls as [string, unknown][]).filter(
+        (call) => call[0] === 'timer:tick'
       );
       expect(tickCalls.length).toBe(0);
     });

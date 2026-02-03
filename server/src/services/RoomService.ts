@@ -620,6 +620,54 @@ export class RoomService {
   }
 
   /**
+   * Resets a room for a new game while keeping the same room code and players.
+   * Used for "Play Again" functionality so players don't need to rejoin.
+   * @param roomId - The room's unique ID
+   * @returns Result containing the reset room or an error
+   */
+  resetRoom(roomId: string): RoomResult<Room> {
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return {
+        success: false,
+        error: 'ROOM_NOT_FOUND',
+        message: 'Room not found',
+      };
+    }
+
+    // Reset all players: isReady=false, score=0, isSpectator=false
+    const newPlayers = new Map(room.players);
+    for (const [playerId, player] of room.players.entries()) {
+      newPlayers.set(playerId, {
+        ...player,
+        isReady: false,
+        score: 0,
+        isSpectator: false,
+      });
+    }
+
+    // Reset the room to lobby state with cleared game state
+    const resetRoom: Room = {
+      ...room,
+      status: 'lobby',
+      players: newPlayers,
+      gameState: {
+        currentRound: 0,
+        question: null,
+        drawings: new Map(),
+        votes: new Map(),
+        phaseStartTime: null,
+        phaseEndTime: null,
+      },
+    };
+
+    this.rooms.set(roomId, resetRoom);
+
+    return { success: true, data: resetRoom };
+  }
+
+  /**
    * Gets all active rooms (for debugging/admin)
    * @returns Array of all active rooms
    */

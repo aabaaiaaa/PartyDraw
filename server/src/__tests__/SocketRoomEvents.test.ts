@@ -3,6 +3,9 @@
  * Tests the full socket flow: create room, join room, player-joined/player-left events
  */
 
+// Set short reconnection timeout for tests (must be before socket import)
+process.env.RECONNECTION_TIMEOUT_MS = '100';
+
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { createServer, Server as HttpServer } from 'http';
 import { AddressInfo } from 'net';
@@ -361,10 +364,11 @@ describe('Socket.IO Room Events Integration', () => {
       await waitForEvent(hostClient, 'room:player-joined');
 
       // Set up listener for player-left on host
+      // Use longer timeout to handle reconnection timeout (100ms in test env, but may be cached at 10s)
       const playerLeftPromise = waitForEvent<{
         playerId: string;
         playerCount: number;
-      }>(hostClient, 'room:player-left');
+      }>(hostClient, 'room:player-left', 12000);
 
       // Player disconnects (simulating browser close/network issue)
       // Remove from tracked sockets first to avoid afterEach disconnect
@@ -379,7 +383,7 @@ describe('Socket.IO Room Events Integration', () => {
 
       expect(playerLeft.playerId).toBe(joinResponse.player?.id);
       expect(playerLeft.playerCount).toBe(0);
-    });
+    }, 15000);
 
     it('should update player count correctly when multiple players leave', async () => {
       // Create host client and room

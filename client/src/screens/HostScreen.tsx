@@ -108,7 +108,7 @@ function renderGameContent(
 }
 
 function HostScreen({ deviceId }: HostScreenProps) {
-  const { gameState, createRoom, resetState, startGame, clearError } = useGameState();
+  const { gameState, createRoom, resetGame, startGame, clearError } = useGameState();
   const { connectionState, connect } = useSocket();
 
   // Automatically create a room when the host screen mounts
@@ -118,10 +118,9 @@ function HostScreen({ deviceId }: HostScreenProps) {
     }
   }, [gameState.inRoom, createRoom, connectionState]);
 
-  // Handle play again - reset state and create new room
+  // Handle play again - reset game while keeping same room
   const handlePlayAgain = () => {
-    resetState();
-    // Room will be created automatically via the useEffect above
+    resetGame();
   };
 
   return (

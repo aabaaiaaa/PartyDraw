@@ -14,9 +14,10 @@ interface WaitingScreenProps {
   players: Player[];
   currentPlayerId?: string;
   onCancelReady: () => void;
+  onStartGame?: () => void;
 }
 
-function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScreenProps) {
+function WaitingScreen({ players, currentPlayerId, onCancelReady, onStartGame }: WaitingScreenProps) {
   // Animated dots state for "Waiting..." message
   const [dotCount, setDotCount] = useState(0);
 
@@ -35,6 +36,9 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
   // Calculate ready count
   const readyCount = players.filter((p) => p.isReady).length;
   const totalPlayers = players.length;
+
+  // Check if game can be started (all players ready and at least 2 players)
+  const canStartGame = readyCount === totalPlayers && totalPlayers >= 2;
 
   // Get initials for avatar
   const getInitials = (name: string): string => {
@@ -71,10 +75,12 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
         </div>
 
         <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-1 sm:mb-2">
-          Waiting for host{dots}
+          {canStartGame ? 'Ready to Start!' : `Waiting for players${dots}`}
         </h2>
         <p className="text-sm sm:text-base text-gray-600">
-          The game will start when the host begins
+          {canStartGame
+            ? 'All players are ready. Anyone can start the game!'
+            : 'Waiting for all players to be ready'}
         </p>
       </div>
 
@@ -183,6 +189,16 @@ function WaitingScreen({ players, currentPlayerId, onCancelReady }: WaitingScree
           ))}
         </div>
       </div>
+
+      {/* Start Game button - shown when all players ready and >= 2 players */}
+      {canStartGame && onStartGame && (
+        <button
+          onClick={onStartGame}
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-all active:scale-[0.98] text-sm sm:text-base mb-2 sm:mb-3"
+        >
+          Start Game!
+        </button>
+      )}
 
       {/* Cancel Ready button */}
       <button

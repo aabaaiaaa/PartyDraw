@@ -214,6 +214,8 @@ export interface UseGameStateReturn {
   clearError: () => void;
   /** Reset game state (for returning to lobby) */
   resetState: () => void;
+  /** Reset game for "Play Again" while keeping same room */
+  resetGame: () => void;
 }
 
 /**
@@ -411,8 +413,8 @@ export function useGameState(): UseGameStateReturn {
     };
 
     // Timer tick
-    const handleTimerTick = (data: { seconds: number }) => {
-      updateState({ timerSeconds: data.seconds });
+    const handleTimerTick = (data: { type: string; secondsRemaining: number; roomId: string }) => {
+      updateState({ timerSeconds: data.secondsRemaining });
     };
 
     // ============ Drawing Events ============
@@ -531,6 +533,36 @@ export function useGameState(): UseGameStateReturn {
       });
     };
 
+    // Game reset (Play Again)
+    const handleGameReset = (data: { room: SerializedRoom }) => {
+      const { room } = data;
+      setGameState((prev) => ({
+        ...prev,
+        status: room.status,
+        players: room.players,
+        currentRound: room.gameState.currentRound,
+        question: null,
+        drawings: [],
+        submittedCount: 0,
+        votedCount: 0,
+        hasSubmittedDrawing: false,
+        drawingPhaseEnded: false,
+        hasVoted: false,
+        voteResults: [],
+        winners: [],
+        scores: [],
+        finalStandings: [],
+        finalWinner: null,
+        timerSeconds: null,
+        countdownValue: null,
+        phaseDuration: 0,
+        // Update current player from the room data
+        currentPlayer: prev.currentPlayer
+          ? room.players.find((p) => p.id === prev.currentPlayer?.id) || prev.currentPlayer
+          : null,
+      }));
+    };
+
     // Register all event listeners
     socket.on('room:created', handleRoomCreated);
     socket.on('room:joined', handleRoomJoined);
@@ -544,7 +576,7 @@ export function useGameState(): UseGameStateReturn {
     socket.on('game:countdown', handleGameCountdown);
     socket.on('countdown:tick', handleCountdownTick);
     socket.on('round:start', handleRoundStart);
-    socket.on('round:timer-tick', handleTimerTick);
+    socket.on('timer:tick', handleTimerTick);
     socket.on('drawing:submitted', handleDrawingSubmitted);
     socket.on('drawing:all-submitted', handleAllDrawingsSubmitted);
     socket.on('round:drawing-phase-ended', handleDrawingPhaseEnded);
@@ -554,6 +586,7 @@ export function useGameState(): UseGameStateReturn {
     socket.on('round:voting-phase-ended', handleVotingPhaseEnded);
     socket.on('round:results', handleRoundResults);
     socket.on('game:end', handleGameEnd);
+    socket.on('game:reset', handleGameReset);
 
     // Cleanup listeners on unmount
     return () => {
@@ -569,7 +602,7 @@ export function useGameState(): UseGameStateReturn {
       socket.off('game:countdown', handleGameCountdown);
       socket.off('countdown:tick', handleCountdownTick);
       socket.off('round:start', handleRoundStart);
-      socket.off('round:timer-tick', handleTimerTick);
+      socket.off('timer:tick', handleTimerTick);
       socket.off('drawing:submitted', handleDrawingSubmitted);
       socket.off('drawing:all-submitted', handleAllDrawingsSubmitted);
       socket.off('round:drawing-phase-ended', handleDrawingPhaseEnded);
@@ -579,6 +612,7 @@ export function useGameState(): UseGameStateReturn {
       socket.off('round:voting-phase-ended', handleVotingPhaseEnded);
       socket.off('round:results', handleRoundResults);
       socket.off('game:end', handleGameEnd);
+      socket.off('game:reset', handleGameReset);
     };
   }, [socket, updateState]);
 
@@ -626,9 +660,9 @@ export function useGameState(): UseGameStateReturn {
   );
 
   const startGame = useCallback(() => {
-    if (!connected || !gameState.inRoom || !gameState.isHost) return;
+    if (!connected || !gameState.inRoom) return;
     emit('game:start');
-  }, [connected, emit, gameState.inRoom, gameState.isHost]);
+  }, [connected, emit, gameState.inRoom]);
 
   const submitDrawing = useCallback(
     (drawingData: string) => {
@@ -660,6 +694,11 @@ export function useGameState(): UseGameStateReturn {
     setGameState(initialGameState);
   }, []);
 
+  const resetGame = useCallback(() => {
+    if (!connected || !gameState.inRoom || gameState.status !== 'final') return;
+    emit('game:reset');
+  }, [connected, emit, gameState.inRoom, gameState.status]);
+
   return {
     gameState,
     createRoom,
@@ -672,6 +711,7 @@ export function useGameState(): UseGameStateReturn {
     castVote,
     clearError,
     resetState,
+    resetGame,
   };
 }
 

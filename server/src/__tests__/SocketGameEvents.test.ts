@@ -6,6 +6,9 @@
  * The countdown is 3 seconds, so tests involving game start take longer.
  */
 
+// Set short reconnection timeout for tests (must be before socket import)
+process.env.RECONNECTION_TIMEOUT_MS = '100';
+
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { createServer, Server as HttpServer } from 'http';
 import { AddressInfo } from 'net';
@@ -209,18 +212,25 @@ describe('Socket.IO Game Events Integration', () => {
       expect(playerCountdown.count).toBe(3);
     }, 15000);
 
-    it('should fail if non-host tries to start game', async () => {
+    it('should allow non-host player to start game', async () => {
       const { hostSocket, roomCode } = await createRoomWithHost();
 
       const { socket: playerSocket } = await joinAndReadyPlayer(roomCode, hostSocket);
 
-      // Player tries to start game (should fail)
-      const startResponse = await new Promise<{ success: boolean; error?: string }>((resolve) => {
+      // Set up listener for countdown event
+      const countdownPromise = waitForEvent<{ count: number }>(playerSocket, 'game:countdown');
+
+      // Player starts game (should succeed - any player can start)
+      const startResponse = await new Promise<{ success: boolean; status?: string }>((resolve) => {
         playerSocket.emit('game:start', resolve);
       });
 
-      expect(startResponse.success).toBe(false);
-      expect(startResponse.error).toBe('NOT_HOST');
+      expect(startResponse.success).toBe(true);
+      expect(startResponse.status).toBe('countdown');
+
+      // Verify countdown event is received
+      const countdown = await countdownPromise;
+      expect(countdown.count).toBe(3);
     }, 15000);
   });
 
