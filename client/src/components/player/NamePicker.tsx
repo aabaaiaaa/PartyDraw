@@ -6,11 +6,14 @@
  * - Auto-generated name
  * - "Generate New Name" button to get a new random name
  * - Custom name input field for manual entry
+ * - Theme voting section for suggesting preferred themes
  * - Large "Ready!" button to mark player as ready
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Player } from '../../hooks/useGameState';
+import PlayerThemeVote from './PlayerThemeVote';
+import { ThemeVote, ThemeVoteAggregation } from '../../types/themes';
 
 // Action verbs/adjectives for player names (mirrors server-side generator)
 const VERBS = [
@@ -84,12 +87,27 @@ interface NamePickerProps {
   onUpdateName: (name: string) => void;
   onReady: (ready: boolean) => void;
   isReady: boolean;
+  /** Current theme vote for this player */
+  currentThemeVote?: ThemeVote | null;
+  /** Callback when player votes for themes */
+  onThemeVote?: (vote: ThemeVote) => void;
+  /** Aggregated theme votes from all players */
+  themeVoteAggregation?: ThemeVoteAggregation;
 }
 
-function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps) {
+function NamePicker({
+  player,
+  onUpdateName,
+  onReady,
+  isReady,
+  currentThemeVote,
+  onThemeVote,
+  themeVoteAggregation,
+}: NamePickerProps) {
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [customName, setCustomName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [themeVoteCollapsed, setThemeVoteCollapsed] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus input when entering custom mode
@@ -248,6 +266,19 @@ function NamePicker({ player, onUpdateName, onReady, isReady }: NamePickerProps)
         <span className="text-xs sm:text-sm text-gray-500">or tap name to edit</span>
         <div className="flex-1 h-px bg-gray-300"></div>
       </div>
+
+      {/* Theme Vote Section (optional) */}
+      {onThemeVote && (
+        <div className="mb-3 sm:mb-4">
+          <PlayerThemeVote
+            currentVote={currentThemeVote || null}
+            onVote={onThemeVote}
+            aggregation={themeVoteAggregation}
+            collapsed={themeVoteCollapsed}
+            onToggleCollapsed={() => setThemeVoteCollapsed(!themeVoteCollapsed)}
+          />
+        </div>
+      )}
 
       {/* Ready Button */}
       <button

@@ -12,6 +12,7 @@
  */
 
 import { useGameState, Player, VoteResult, ScoreEntry } from '../hooks/useGameState';
+import { ThemeVote } from '../types/themes';
 import { useSocket } from '../hooks/useSocket';
 import JoinScreen from '../components/player/JoinScreen';
 import NamePicker from '../components/player/NamePicker';
@@ -294,6 +295,7 @@ function renderPlayerContent(
     resetGame: () => void;
     startGame: () => void;
     voteToSkipQuestion: () => void;
+    submitThemeVote: (vote: ThemeVote) => void;
   }
 ) {
   // Not in a room - show join screen
@@ -330,6 +332,9 @@ function renderPlayerContent(
         onUpdateName={actions.updateName}
         onReady={actions.setReady}
         isReady={gameState.currentPlayer.isReady}
+        currentThemeVote={gameState.currentPlayerThemeVote}
+        onThemeVote={actions.submitThemeVote}
+        themeVoteAggregation={gameState.themeVoteAggregation}
       />
     );
   }
@@ -437,6 +442,7 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
     startGame,
     clearError,
     voteToSkipQuestion,
+    submitThemeVote,
   } = useGameState();
 
   const { connectionState, connect } = useSocket();
@@ -450,6 +456,7 @@ function PlayerScreen({ deviceId }: PlayerScreenProps) {
     resetGame,
     startGame,
     voteToSkipQuestion,
+    submitThemeVote,
   };
 
   return (

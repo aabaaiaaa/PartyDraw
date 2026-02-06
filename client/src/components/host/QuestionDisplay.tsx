@@ -3,12 +3,16 @@
  *
  * Displays during the drawing phase:
  * - Current round indicator
+ * - Active theme badges (packs and genres)
  * - The drawing prompt/question prominently
  * - Large countdown timer with color changes as time runs low
  * - Submission progress (e.g., "3/5 players submitted")
  *
  * Uses horizontal layout to fit on landscape screens.
  */
+
+import ThemeBadge from './ThemeBadge';
+import { ThemeSettings } from '../../types/themes';
 
 interface QuestionDisplayProps {
   question: string;
@@ -19,6 +23,8 @@ interface QuestionDisplayProps {
   totalRounds: number;
   skipVoteCount?: number;
   skipVoteThreshold?: number;
+  /** Active theme settings to display as badges */
+  themes?: ThemeSettings;
 }
 
 function getTimerColorClasses(seconds: number | null): { text: string; ring: string; bg: string } {
@@ -45,6 +51,7 @@ function QuestionDisplay({
   totalRounds,
   skipVoteCount = 0,
   skipVoteThreshold = 0,
+  themes,
 }: QuestionDisplayProps) {
   const timerColors = getTimerColorClasses(timerSeconds);
   const progressColor = getProgressColor(submittedCount, totalPlayers);
@@ -60,6 +67,17 @@ function QuestionDisplay({
         <span className="inline-block px-2 py-0.5 sm:px-3 sm:py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm lg:text-base font-semibold mb-2 sm:mb-3">
           Round {round} of {totalRounds}
         </span>
+
+        {/* Theme badges - show active packs and genres */}
+        {themes && (
+          <div className="mb-2 sm:mb-3">
+            <ThemeBadge
+              packs={themes.partyPacks}
+              genres={themes.genres}
+              size="sm"
+            />
+          </div>
+        )}
 
         {/* Question prompt */}
         <p className="text-sm sm:text-base lg:text-lg text-gray-500 mb-1">Draw:</p>

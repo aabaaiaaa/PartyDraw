@@ -5,12 +5,15 @@
  * - Large QR code with room URL for players to scan
  * - Room code text for manual entry
  * - Player list with colored avatars and ready status indicators
+ * - Theme vote results display showing winning player choices
  * - "Waiting for players" message when lobby is empty
  */
 
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCodeDisplay from './QRCodeDisplay';
+import ThemeVoteResults from './ThemeVoteResults';
+import { ThemeVoteAggregation, ThemeVote } from '../../types/themes';
 
 interface Player {
   id: string;
@@ -28,6 +31,12 @@ interface HostLobbyProps {
   maxPlayers?: number;
   /** Callback when the host clicks "Start Game" */
   onStartGame?: () => void;
+  /** Aggregated theme vote counts from all players */
+  themeVoteAggregation: ThemeVoteAggregation;
+  /** Map of player IDs to their theme votes */
+  playerThemeVotes: Map<string, ThemeVote>;
+  /** Number of questions available for current themes */
+  questionCount?: number;
 }
 
 /**
@@ -152,7 +161,15 @@ function EmptyPlayerList() {
 /**
  * Main HostLobby component
  */
-function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobbyProps) {
+function HostLobby({
+  roomCode,
+  players,
+  maxPlayers = 8,
+  onStartGame,
+  themeVoteAggregation,
+  playerThemeVotes,
+  questionCount = 100,
+}: HostLobbyProps) {
   const roomUrl = useMemo(() => getRoomUrl(roomCode), [roomCode]);
 
   const readyCount = players.filter((p) => p.isReady).length;
@@ -160,9 +177,18 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
   const canStart = allReady && players.length >= 2;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 xl:gap-12 items-start h-full overflow-hidden">
-      {/* Left side: QR Code and Room Code - scales for larger screens */}
-      <div className="flex flex-col items-center text-center w-full lg:w-1/3 xl:w-2/5">
+    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-4 xl:gap-6 items-stretch h-full overflow-hidden">
+      {/* Desktop: Left column - Theme Vote Results */}
+      <div className="hidden lg:flex lg:w-[280px] xl:w-[320px] flex-shrink-0 h-full overflow-y-auto">
+        <ThemeVoteResults
+          themeVoteAggregation={themeVoteAggregation}
+          playerThemeVotes={playerThemeVotes}
+          questionCount={questionCount}
+        />
+      </div>
+
+      {/* Center: QR Code and Room Code */}
+      <div className="flex flex-col items-center text-center w-full lg:flex-1 lg:min-w-0">
         <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-purple-800 mb-2 sm:mb-4">
           Join the Game!
         </h2>
@@ -186,8 +212,17 @@ function HostLobby({ roomCode, players, maxPlayers = 8, onStartGame }: HostLobby
         </p>
       </div>
 
+      {/* Mobile/Tablet: Theme Vote Results */}
+      <div className="lg:hidden w-full">
+        <ThemeVoteResults
+          themeVoteAggregation={themeVoteAggregation}
+          playerThemeVotes={playerThemeVotes}
+          questionCount={questionCount}
+        />
+      </div>
+
       {/* Right side: Player List */}
-      <div className="flex-1 w-full lg:w-2/3 xl:w-3/5 min-h-0 flex flex-col">
+      <div className="flex-1 w-full lg:flex-1 lg:min-w-0 min-h-0 flex flex-col">
         <div className="flex justify-between items-center mb-3 sm:mb-4">
           <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-purple-800">
             Players ({players.length}/{maxPlayers})

@@ -10,9 +10,9 @@
  * Uses horizontal layout to fit everything on landscape screens without scrolling.
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ScoreEntry, Player } from '../../hooks/useGameState';
+import { ScoreEntry, Player, DrawingHistoryEntry } from '../../hooks/useGameState';
 import {
   getHighScores,
   saveGameScores,
@@ -30,6 +30,8 @@ interface LeaderboardProps {
   players: Player[];
   /** Callback when Play Again is clicked */
   onPlayAgain?: () => void;
+  /** All drawings accumulated across rounds */
+  allDrawings?: DrawingHistoryEntry[];
 }
 
 /**
@@ -41,16 +43,27 @@ function getPlayerColor(players: Player[], playerId: string): string {
 }
 
 /**
+ * Get the best drawing for a player (most votes, tiebreak: latest round)
+ */
+function getBestDrawing(allDrawings: DrawingHistoryEntry[], playerId: string): DrawingHistoryEntry | null {
+  const playerDrawings = allDrawings.filter((d) => d.playerId === playerId);
+  if (playerDrawings.length === 0) return null;
+  return playerDrawings.sort((a, b) => b.votes - a.votes || b.round - a.round)[0];
+}
+
+/**
  * Compact Podium display for horizontal layout
  */
 function CompactPodium({
   standings,
   players,
   showPodium,
+  allDrawings = [],
 }: {
   standings: ScoreEntry[];
   players: Player[];
   showPodium: boolean;
+  allDrawings?: DrawingHistoryEntry[];
 }) {
   const first = standings[0];
   const second = standings[1];
@@ -116,6 +129,22 @@ function CompactPodium({
                 <span className="text-xs sm:text-sm lg:text-base font-bold text-purple-700 mt-0.5">
                   {player.score} pts
                 </span>
+                {(() => {
+                  const bestDrawing = getBestDrawing(allDrawings, player.playerId);
+                  if (!bestDrawing) return null;
+                  const size = position === 1 ? 'w-[4.5rem] h-[4.5rem]' : 'w-14 h-14';
+                  return (
+                    <motion.img
+                      src={bestDrawing.drawingData}
+                      alt={`${player.playerName}'s best drawing`}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15, delay: delay + 0.9 }}
+                      className={`${size} mt-1 rounded-lg shadow-md object-cover`}
+                      style={{ border: `3px solid ${getPlayerColor(players, player.playerId)}` }}
+                    />
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>
@@ -135,13 +164,14 @@ function CompactPodium({
   );
 }
 
-function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardProps) {
+function Leaderboard({ standings, winner, players, onPlayAgain, allDrawings = [] }: LeaderboardProps) {
   const [showTitle, setShowTitle] = useState(false);
   const [showPodium, setShowPodium] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showStandings, setShowStandings] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [revealedRows, setRevealedRows] = useState(0);
+  const [showGallery, setShowGallery] = useState(false);
 
   const [highScores, setHighScores] = useState<HighScoreEntry[]>([]);
   const [showHighScores, setShowHighScores] = useState(false);
@@ -163,6 +193,7 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
     timers.push(setTimeout(() => setShowStandings(true), 1200));
     timers.push(setTimeout(() => setShowButton(true), 1800));
     timers.push(setTimeout(() => setShowHighScores(true), 2200));
+    timers.push(setTimeout(() => setShowGallery(true), 2500));
     return () => timers.forEach(clearTimeout);
   }, []);
 
@@ -179,6 +210,21 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
   }, [onPlayAgain]);
 
   const remainingStandings = standings.slice(3);
+
+  // Build gallery drawings: all drawings except podium players' best drawings
+  const galleryDrawings = useMemo(() => {
+    const podiumPlayerIds = standings.slice(0, 3).map((s) => s.playerId);
+    const podiumBestIds = new Set(
+      podiumPlayerIds
+        .map((id) => {
+          const best = getBestDrawing(allDrawings, id);
+          return best ? `${best.playerId}-${best.round}` : null;
+        })
+        .filter(Boolean)
+    );
+    return allDrawings.filter((d) => !podiumBestIds.has(`${d.playerId}-${d.round}`));
+  }, [allDrawings, standings]);
+  const tickerDuration = Math.max(galleryDrawings.length * 3, 10);
 
   return (
     <motion.div
@@ -209,7 +255,7 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
         {/* Left: Podium + Play Again */}
         <div className="lg:w-2/5 flex flex-col items-center justify-center flex-shrink-0">
           {standings.length > 0 && (
-            <CompactPodium standings={standings} players={players} showPodium={showPodium} />
+            <CompactPodium standings={standings} players={players} showPodium={showPodium} allDrawings={allDrawings} />
           )}
 
           <AnimatePresence>
@@ -338,6 +384,46 @@ function Leaderboard({ standings, winner, players, onPlayAgain }: LeaderboardPro
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Gallery Ticker - scrolling marquee of all other drawings */}
+      <AnimatePresence>
+        {showGallery && galleryDrawings.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex-shrink-0 h-[70px] sm:h-[80px] overflow-hidden mt-2 relative"
+          >
+            <div
+              className="flex gap-3 items-center"
+              style={{
+                animation: `ticker-scroll ${tickerDuration}s linear infinite`,
+                width: 'max-content',
+              }}
+            >
+              {[...galleryDrawings, ...galleryDrawings].map((drawing, index) => {
+                const playerColor = getPlayerColor(players, drawing.playerId);
+                const playerName = players.find((p) => p.id === drawing.playerId)?.name || '?';
+                return (
+                  <div key={`${drawing.playerId}-${drawing.round}-${index}`} className="flex flex-col items-center flex-shrink-0">
+                    <img
+                      src={drawing.drawingData}
+                      alt={`Drawing by ${playerName}`}
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover shadow-sm"
+                      style={{ border: `2px solid ${playerColor}` }}
+                    />
+                    <span
+                      className="text-[8px] sm:text-[10px] font-bold text-white px-1.5 rounded-full mt-0.5 truncate max-w-[56px]"
+                      style={{ backgroundColor: playerColor }}
+                    >
+                      {playerName}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Empty state */}
       {standings.length === 0 && (

@@ -4,6 +4,18 @@
  */
 
 import { Player } from './Player';
+import { ThemeSettings, ThemeVote, DEFAULT_THEME_SETTINGS } from '../utils/themes';
+
+/**
+ * A drawing entry preserved across rounds for the final leaderboard
+ */
+export interface DrawingHistoryEntry {
+  playerId: string;
+  drawingData: string;
+  round: number;
+  question: string;
+  votes: number;
+}
 
 /**
  * Room status representing the current state of the room
@@ -36,6 +48,10 @@ export interface GameState {
   usedQuestionIds: Set<string>;
   /** Set of player IDs who have voted to skip the current question */
   skipVotes: Set<string>;
+  /** Map of player IDs to their theme votes/preferences (for lobby voting) */
+  playerThemeVotes: Map<string, ThemeVote>;
+  /** Accumulated drawing history across all rounds (for final leaderboard) */
+  drawingHistory: DrawingHistoryEntry[];
 }
 
 /**
@@ -50,6 +66,8 @@ export interface RoomSettings {
   drawingTime: number;
   /** Time allowed for voting in seconds */
   votingTime: number;
+  /** Theme settings for question filtering */
+  themes: ThemeSettings;
 }
 
 /**
@@ -60,6 +78,7 @@ export const DEFAULT_ROOM_SETTINGS: RoomSettings = {
   rounds: 3,
   drawingTime: 20,
   votingTime: 15,
+  themes: DEFAULT_THEME_SETTINGS,
 };
 
 /**
@@ -127,6 +146,8 @@ export function createInitialGameState(): GameState {
     phaseEndTime: null,
     usedQuestionIds: new Set(),
     skipVotes: new Set(),
+    playerThemeVotes: new Map(),
+    drawingHistory: [],
   };
 }
 
@@ -313,3 +334,6 @@ export function getActivePlayerCount(room: Room): number {
   }
   return count;
 }
+
+// Re-export theme types for convenience
+export type { ThemeSettings, ThemeVote } from '../utils/themes';

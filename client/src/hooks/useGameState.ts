@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useSocket } from './useSocket';
+import {
+  ThemeSettings,
+  ThemeVote,
+  DEFAULT_THEME_SETTINGS,
+  calculateWinningThemesFromVotes,
+} from '../types/themes';
 
 /**
  * Room status representing the current state of the game
@@ -54,6 +60,17 @@ export interface ScoreEntry {
 }
 
 /**
+ * A drawing preserved across rounds for the final leaderboard
+ */
+export interface DrawingHistoryEntry {
+  playerId: string;
+  drawingData: string;
+  round: number;
+  question: string;
+  votes: number;
+}
+
+/**
  * Winner information
  */
 export interface Winner {
@@ -70,6 +87,7 @@ export interface RoomSettings {
   rounds: number;
   drawingTime: number;
   votingTime: number;
+  themes: ThemeSettings;
 }
 
 /**
@@ -83,6 +101,16 @@ export interface SerializedGameState {
   phaseStartTime: number | null;
   phaseEndTime: number | null;
   skipVotes?: string[];
+  playerThemeVotes?: Array<[string, ThemeVote]>;
+}
+
+/**
+ * Aggregated theme votes
+ */
+export interface ThemeVoteAggregation {
+  packs: Record<string, number>;
+  genres: Record<string, number>;
+  ageRatings: Record<string, number>;
 }
 
 /**
@@ -161,6 +189,18 @@ export interface GameState {
   skipVoteThreshold: number;
   /** Whether the current player has voted to skip */
   hasVotedToSkip: boolean;
+  /** Current theme settings */
+  themes: ThemeSettings;
+  /** Number of questions available for current themes */
+  questionCount: number;
+  /** Player theme votes in the lobby */
+  playerThemeVotes: Map<string, ThemeVote>;
+  /** Aggregated theme vote counts */
+  themeVoteAggregation: ThemeVoteAggregation;
+  /** Current player's theme vote */
+  currentPlayerThemeVote: ThemeVote | null;
+  /** All drawings accumulated across rounds (for final leaderboard) */
+  allDrawings: DrawingHistoryEntry[];
 }
 
 /**
@@ -196,6 +236,12 @@ const initialGameState: GameState = {
   skipVoteCount: 0,
   skipVoteThreshold: 0,
   hasVotedToSkip: false,
+  themes: DEFAULT_THEME_SETTINGS,
+  questionCount: 100, // Default estimate
+  playerThemeVotes: new Map(),
+  themeVoteAggregation: { packs: {}, genres: {}, ageRatings: {} },
+  currentPlayerThemeVote: null,
+  allDrawings: [],
 };
 
 /**
@@ -228,6 +274,10 @@ export interface UseGameStateReturn {
   resetGame: () => void;
   /** Vote to skip/replace the current question */
   voteToSkipQuestion: () => void;
+  /** Set theme settings (host only) */
+  setThemes: (themes: ThemeSettings) => void;
+  /** Submit player theme vote */
+  submitThemeVote: (vote: ThemeVote) => void;
 }
 
 /**
@@ -284,12 +334,17 @@ export function useGameState(): UseGameStateReturn {
         totalRounds: room.settings.rounds,
         currentRound: room.gameState.currentRound,
         error: null,
+        themes: room.settings.themes || DEFAULT_THEME_SETTINGS,
       });
     };
 
     // Room joined (player)
     const handleRoomJoined = (data: { room: SerializedRoom; player: Player; isSpectator?: boolean }) => {
       const { room, player, isSpectator } = data;
+      // Convert playerThemeVotes array to Map
+      const themeVotesMap = new Map<string, ThemeVote>(
+        room.gameState.playerThemeVotes || []
+      );
       updateState({
         inRoom: true,
         roomId: room.id,
@@ -303,6 +358,9 @@ export function useGameState(): UseGameStateReturn {
         currentRound: room.gameState.currentRound,
         question: room.gameState.question,
         error: null,
+        themes: room.settings.themes || DEFAULT_THEME_SETTINGS,
+        playerThemeVotes: themeVotesMap,
+        currentPlayerThemeVote: themeVotesMap.get(player.id) || null,
       });
       // Log if joining as spectator
       if (isSpectator) {
@@ -499,6 +557,32 @@ export function useGameState(): UseGameStateReturn {
       });
     };
 
+    // ============ Theme Events ============
+
+    // Theme settings updated
+    const handleThemesUpdated = (data: { themes: ThemeSettings; questionCount: number }) => {
+      updateState({
+        themes: data.themes,
+        questionCount: data.questionCount,
+      });
+    };
+
+    // Theme votes updated
+    const handleThemeVotesUpdated = (data: {
+      votes: Array<[string, ThemeVote]>;
+      aggregation: ThemeVoteAggregation;
+    }) => {
+      const votesMap = new Map<string, ThemeVote>(data.votes);
+      setGameState((prev) => ({
+        ...prev,
+        playerThemeVotes: votesMap,
+        themeVoteAggregation: data.aggregation,
+        currentPlayerThemeVote: prev.currentPlayer
+          ? votesMap.get(prev.currentPlayer.id) || null
+          : null,
+      }));
+    };
+
     // ============ Voting Events ============
 
     // Voting phase started
@@ -568,6 +652,7 @@ export function useGameState(): UseGameStateReturn {
       standings: ScoreEntry[];
       winner: ScoreEntry | null;
       totalRounds: number;
+      drawingHistory?: DrawingHistoryEntry[];
     }) => {
       // Update player scores in our players array
       setGameState((prev) => {
@@ -583,6 +668,7 @@ export function useGameState(): UseGameStateReturn {
           scores: data.standings,
           players: updatedPlayers,
           timerSeconds: null,
+          allDrawings: data.drawingHistory || [],
         };
       });
     };
@@ -614,6 +700,7 @@ export function useGameState(): UseGameStateReturn {
         currentPlayer: prev.currentPlayer
           ? room.players.find((p) => p.id === prev.currentPlayer?.id) || prev.currentPlayer
           : null,
+        allDrawings: [],
       }));
     };
 
@@ -635,6 +722,8 @@ export function useGameState(): UseGameStateReturn {
     socket.on('round:drawing-phase-ended', handleDrawingPhaseEnded);
     socket.on('question:skip-vote-received', handleSkipVoteReceived);
     socket.on('question:skipped', handleQuestionSkipped);
+    socket.on('room:themes-updated', handleThemesUpdated);
+    socket.on('room:theme-votes-updated', handleThemeVotesUpdated);
     socket.on('round:voting-start', handleVotingStart);
     socket.on('vote:received', handleVoteReceived);
     socket.on('voting:all-voted', handleAllVoted);
@@ -662,6 +751,8 @@ export function useGameState(): UseGameStateReturn {
       socket.off('round:drawing-phase-ended', handleDrawingPhaseEnded);
       socket.off('question:skip-vote-received', handleSkipVoteReceived);
       socket.off('question:skipped', handleQuestionSkipped);
+      socket.off('room:themes-updated', handleThemesUpdated);
+      socket.off('room:theme-votes-updated', handleThemeVotesUpdated);
       socket.off('round:voting-start', handleVotingStart);
       socket.off('vote:received', handleVoteReceived);
       socket.off('voting:all-voted', handleAllVoted);
@@ -671,6 +762,36 @@ export function useGameState(): UseGameStateReturn {
       socket.off('game:reset', handleGameReset);
     };
   }, [socket, updateState]);
+
+  // Track the last aggregation to detect changes
+  const prevAggregationRef = useRef<string>('');
+
+  // Request updated question count when theme votes change
+  useEffect(() => {
+    if (!socket || !connected || !gameState.inRoom || gameState.status !== 'lobby') {
+      return;
+    }
+
+    // Serialize aggregation to detect changes
+    const aggregationKey = JSON.stringify(gameState.themeVoteAggregation);
+    if (aggregationKey === prevAggregationRef.current) {
+      return;
+    }
+    prevAggregationRef.current = aggregationKey;
+
+    // Calculate winning themes and request question count
+    const winningThemes = calculateWinningThemesFromVotes(gameState.themeVoteAggregation);
+
+    socket.emit(
+      'room:get-question-count',
+      { themes: winningThemes },
+      (response: { success: boolean; questionCount?: number }) => {
+        if (response.success && typeof response.questionCount === 'number') {
+          updateState({ questionCount: response.questionCount });
+        }
+      }
+    );
+  }, [socket, connected, gameState.inRoom, gameState.status, gameState.themeVoteAggregation, updateState]);
 
   // ============ Actions ============
 
@@ -762,6 +883,25 @@ export function useGameState(): UseGameStateReturn {
     updateState({ hasVotedToSkip: true });
   }, [connected, emit, gameState.inRoom, gameState.status, gameState.hasVotedToSkip, updateState]);
 
+  const setThemes = useCallback(
+    (themes: ThemeSettings) => {
+      if (!connected || !gameState.inRoom || !gameState.isHost) return;
+      if (gameState.status !== 'lobby') return;
+      emit('room:set-themes', { themes });
+    },
+    [connected, emit, gameState.inRoom, gameState.isHost, gameState.status]
+  );
+
+  const submitThemeVote = useCallback(
+    (vote: ThemeVote) => {
+      if (!connected || !gameState.inRoom) return;
+      if (gameState.status !== 'lobby') return;
+      emit('player:vote-theme', { themeVote: vote });
+      updateState({ currentPlayerThemeVote: vote });
+    },
+    [connected, emit, gameState.inRoom, gameState.status, updateState]
+  );
+
   return {
     gameState,
     createRoom,
@@ -776,6 +916,8 @@ export function useGameState(): UseGameStateReturn {
     resetState,
     resetGame,
     voteToSkipQuestion,
+    setThemes,
+    submitThemeVote,
   };
 }
 

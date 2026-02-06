@@ -47,6 +47,9 @@ function renderGameContent(
           roomCode={gameState.roomCode || '------'}
           players={gameState.players}
           onStartGame={onStartGame}
+          themeVoteAggregation={gameState.themeVoteAggregation}
+          playerThemeVotes={gameState.playerThemeVotes}
+          questionCount={gameState.questionCount}
         />
       );
 
@@ -64,6 +67,7 @@ function renderGameContent(
           totalRounds={gameState.totalRounds}
           skipVoteCount={gameState.skipVoteCount}
           skipVoteThreshold={gameState.skipVoteThreshold}
+          themes={gameState.themes}
         />
       );
 
@@ -97,6 +101,7 @@ function renderGameContent(
           winner={gameState.finalWinner}
           players={gameState.players}
           onPlayAgain={onPlayAgain}
+          allDrawings={gameState.allDrawings}
         />
       );
 

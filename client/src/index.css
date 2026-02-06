@@ -277,3 +277,13 @@ body {
 .crown-bounce {
   animation: crown-bounce 1s ease-in-out infinite;
 }
+
+/* Drawing gallery ticker */
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}

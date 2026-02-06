@@ -7,6 +7,7 @@ import { Server, Socket } from 'socket.io';
 import { roomService, RoomError } from '../services/RoomService';
 import {
   Room,
+  DrawingHistoryEntry,
   updateRoomStatus,
   resetGameStateForNewRound,
   submitDrawing,
@@ -24,7 +25,8 @@ import {
   getNextStateAfterResults,
 } from '../models/Game';
 import { timerService, TimerType } from '../services/TimerService';
-import { getRandomQuestion } from '../utils/questionBank';
+import { getRandomQuestion, getRandomQuestionWithThemes, getQuestionCountForThemes } from '../utils/questionBank';
+import { ThemeSettings, ThemeVote, ThemeVoteAggregation, validateThemeSettings, calculateWinningThemesFromVotes } from '../utils/themes';
 
 /** 
  * Reconnection timeout in milliseconds
@@ -55,6 +57,7 @@ function serializeRoom(room: Room): object {
       phaseStartTime: room.gameState.phaseStartTime,
       phaseEndTime: room.gameState.phaseEndTime,
       skipVotes: Array.from(room.gameState.skipVotes),
+      playerThemeVotes: Array.from(room.gameState.playerThemeVotes.entries()),
     },
     settings: room.settings,
     createdAt: room.createdAt,
@@ -631,17 +634,19 @@ export function setupPlayerHandlers(io: Server, socket: Socket): void {
 
 /**
  * Selects a random question, avoiding recently used questions in the current game session
+ * Uses the room's theme settings for filtering
  * @param room - The room to get a question for
  * @returns The selected question text
  */
 function selectRandomQuestion(room: Room): string {
-  const questionResult = getRandomQuestion(room.gameState.usedQuestionIds);
+  const themes = room.settings.themes;
+  const questionResult = getRandomQuestionWithThemes(themes, room.gameState.usedQuestionIds);
 
   if (!questionResult) {
     // All questions used - reset the set and try again
     console.log(`[question] All questions used in room ${room.code}, resetting question pool`);
     room.gameState.usedQuestionIds.clear();
-    const fallbackQuestion = getRandomQuestion(room.gameState.usedQuestionIds);
+    const fallbackQuestion = getRandomQuestionWithThemes(themes, room.gameState.usedQuestionIds);
     const text = fallbackQuestion?.text || 'Draw a happy cloud'; // Ultimate fallback
     if (fallbackQuestion) {
       room.gameState.usedQuestionIds.add(fallbackQuestion.id);
@@ -683,7 +688,7 @@ export function setupGameHandlers(io: Server, socket: Socket): void {
       return;
     }
 
-    const { room } = roomInfo;
+    let { room } = roomInfo;
 
     // Validate transition to countdown
     try {
@@ -700,6 +705,32 @@ export function setupGameHandlers(io: Server, socket: Socket): void {
       }
       return;
     }
+
+    // Calculate winning themes from player votes before starting the game
+    const voteAggregation = aggregateThemeVotes(room.gameState.playerThemeVotes);
+    const winningThemes = calculateWinningThemesFromVotes(voteAggregation);
+
+    // Apply winning themes to room settings
+    room = {
+      ...room,
+      settings: {
+        ...room.settings,
+        themes: winningThemes,
+      },
+    };
+
+    // Get question count for winning themes
+    const questionCount = getQuestionCountForThemes(winningThemes);
+
+    console.log(
+      `[game:start] Applied winning themes: ${winningThemes.partyPacks.join(', ')} / ${winningThemes.genres.join(', ')} / ${winningThemes.ageRating} (${questionCount} questions)`
+    );
+
+    // Broadcast theme update to all clients so they see the final selection
+    io.to(room.id).emit('room:themes-updated', {
+      themes: winningThemes,
+      questionCount,
+    });
 
     // Update room status to countdown
     let updatedRoom = updateRoomStatus(room, 'countdown');
@@ -797,6 +828,222 @@ export function setupGameHandlers(io: Server, socket: Socket): void {
       });
     }
   });
+}
+
+/**
+ * Sets up theme-related socket event handlers
+ * @param io - The Socket.IO server instance
+ * @param socket - The connected socket
+ */
+export function setupThemeHandlers(io: Server, socket: Socket): void {
+  /**
+   * Handle room:set-themes event
+   * Allows the host to set room theme settings
+   */
+  socket.on(
+    'room:set-themes',
+    (data: { themes: Partial<ThemeSettings> }, callback?: (response: object) => void) => {
+      console.log(`[room:set-themes] Socket ${socket.id} setting themes`);
+
+      // Get the room for this socket
+      const roomInfo = roomService.getRoomBySocket(socket.id);
+
+      if (!roomInfo) {
+        emitRoomError(socket, 'ROOM_NOT_FOUND', 'You are not in a room');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'ROOM_NOT_FOUND',
+            message: 'You are not in a room',
+          });
+        }
+        return;
+      }
+
+      const { room } = roomInfo;
+
+      // Only host can set themes
+      if (room.hostSocketId !== socket.id) {
+        emitRoomError(socket, 'PLAYER_NOT_FOUND', 'Only the host can set themes');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'NOT_HOST',
+            message: 'Only the host can change theme settings',
+          });
+        }
+        return;
+      }
+
+      // Only allow theme changes in lobby
+      if (room.status !== 'lobby') {
+        emitRoomError(socket, 'GAME_IN_PROGRESS', 'Cannot change themes during game');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'WRONG_PHASE',
+            message: 'Theme settings can only be changed in the lobby',
+          });
+        }
+        return;
+      }
+
+      // Validate and apply themes
+      const validatedThemes = validateThemeSettings(data.themes);
+      const updatedRoom: Room = {
+        ...room,
+        settings: {
+          ...room.settings,
+          themes: validatedThemes,
+        },
+      };
+      roomService.updateRoom(updatedRoom);
+
+      // Get question count for the new themes
+      const questionCount = getQuestionCountForThemes(validatedThemes);
+
+      console.log(
+        `[room:set-themes] Themes updated in room ${room.code}: ${validatedThemes.partyPacks.join(', ')} / ${validatedThemes.genres.join(', ')} (${questionCount} questions available)`
+      );
+
+      // Broadcast theme update to all players in the room
+      io.to(room.id).emit('room:themes-updated', {
+        themes: validatedThemes,
+        questionCount,
+      });
+
+      if (callback) {
+        callback({
+          success: true,
+          themes: validatedThemes,
+          questionCount,
+        });
+      }
+    }
+  );
+
+  /**
+   * Handle player:vote-theme event
+   * Allows a player to submit their theme preferences
+   */
+  socket.on(
+    'player:vote-theme',
+    (data: { themeVote: ThemeVote }, callback?: (response: object) => void) => {
+      console.log(`[player:vote-theme] Socket ${socket.id} voting for themes`);
+
+      // Get the room for this socket
+      const roomInfo = roomService.getRoomBySocket(socket.id);
+
+      if (!roomInfo) {
+        emitRoomError(socket, 'ROOM_NOT_FOUND', 'You are not in a room');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'ROOM_NOT_FOUND',
+            message: 'You are not in a room',
+          });
+        }
+        return;
+      }
+
+      const { room, playerId } = roomInfo;
+
+      // Only allow voting in lobby
+      if (room.status !== 'lobby') {
+        emitRoomError(socket, 'GAME_IN_PROGRESS', 'Cannot vote for themes during game');
+        if (callback) {
+          callback({
+            success: false,
+            error: 'WRONG_PHASE',
+            message: 'Theme voting is only available in the lobby',
+          });
+        }
+        return;
+      }
+
+      // Update player's theme vote
+      const newThemeVotes = new Map(room.gameState.playerThemeVotes);
+      newThemeVotes.set(playerId, data.themeVote);
+
+      const updatedRoom: Room = {
+        ...room,
+        gameState: {
+          ...room.gameState,
+          playerThemeVotes: newThemeVotes,
+        },
+      };
+      roomService.updateRoom(updatedRoom);
+
+      // Aggregate votes for display
+      const voteAggregation = aggregateThemeVotes(newThemeVotes);
+
+      console.log(
+        `[player:vote-theme] Theme vote recorded for player ${playerId} in room ${room.code}`
+      );
+
+      // Broadcast vote update to all players in the room
+      io.to(room.id).emit('room:theme-votes-updated', {
+        votes: Array.from(newThemeVotes.entries()),
+        aggregation: voteAggregation,
+      });
+
+      if (callback) {
+        callback({
+          success: true,
+          votes: Array.from(newThemeVotes.entries()),
+          aggregation: voteAggregation,
+        });
+      }
+    }
+  );
+
+  /**
+   * Handle room:get-question-count event
+   * Returns the number of questions available for given theme settings
+   */
+  socket.on(
+    'room:get-question-count',
+    (data: { themes: Partial<ThemeSettings> }, callback?: (response: object) => void) => {
+      const validatedThemes = validateThemeSettings(data.themes);
+      const questionCount = getQuestionCountForThemes(validatedThemes);
+
+      if (callback) {
+        callback({
+          success: true,
+          questionCount,
+        });
+      }
+    }
+  );
+}
+
+/**
+ * Aggregates theme votes from all players
+ * @param votes - Map of player IDs to their theme votes
+ * @returns Aggregated vote counts
+ */
+function aggregateThemeVotes(votes: Map<string, ThemeVote>): {
+  packs: Record<string, number>;
+  genres: Record<string, number>;
+  ageRatings: Record<string, number>;
+} {
+  const packs: Record<string, number> = {};
+  const genres: Record<string, number> = {};
+  const ageRatings: Record<string, number> = {};
+
+  for (const vote of votes.values()) {
+    if (vote.preferredPack) {
+      packs[vote.preferredPack] = (packs[vote.preferredPack] || 0) + 1;
+    }
+    if (vote.preferredGenre) {
+      genres[vote.preferredGenre] = (genres[vote.preferredGenre] || 0) + 1;
+    }
+    if (vote.preferredAgeRating) {
+      ageRatings[vote.preferredAgeRating] = (ageRatings[vote.preferredAgeRating] || 0) + 1;
+    }
+  }
+
+  return { packs, genres, ageRatings };
 }
 
 /**
@@ -1251,6 +1498,21 @@ function transitionToResultsPhase(io: Server, room: Room): void {
   // Calculate vote counts
   const voteCounts = calculateVoteCounts(room.gameState.votes);
 
+  // Accumulate non-empty drawings into history
+  const newEntries: DrawingHistoryEntry[] = [];
+  for (const [playerId, drawingData] of room.gameState.drawings.entries()) {
+    if (drawingData) {
+      newEntries.push({
+        playerId,
+        drawingData,
+        round: room.gameState.currentRound,
+        question: room.gameState.question || '',
+        votes: voteCounts.get(playerId) || 0,
+      });
+    }
+  }
+  room.gameState.drawingHistory = [...room.gameState.drawingHistory, ...newEntries];
+
   // Update player scores
   let updatedRoom = updatePlayerScores(room, voteCounts);
 
@@ -1346,6 +1608,7 @@ function transitionToFinalPhase(io: Server, room: Room): void {
     standings: finalStandings,
     winner: finalStandings[0] || null,
     totalRounds: currentRoom.settings.rounds,
+    drawingHistory: updatedRoom.gameState.drawingHistory,
   });
 }
 
@@ -1683,6 +1946,9 @@ export function initializeSocketHandlers(io: Server): void {
 
     // Set up game handlers
     setupGameHandlers(io, socket);
+
+    // Set up theme handlers
+    setupThemeHandlers(io, socket);
 
     // Set up drawing handlers
     setupDrawingHandlers(io, socket);
