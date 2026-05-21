@@ -103,7 +103,7 @@ async function joinPlayer(
 // Helper to mark a player as ready
 async function markPlayerReady(playerPage: Page): Promise<void> {
   await playerPage.getByRole('button', { name: /I'm Ready!/i }).click();
-  await playerPage.waitForSelector('text=/Waiting for host/i', { timeout: 5000 });
+  await playerPage.waitForSelector('text=/Waiting for|Ready to Start/i', { timeout: 5000 });
 }
 
 test.describe('Auto-Submit E2E', () => {

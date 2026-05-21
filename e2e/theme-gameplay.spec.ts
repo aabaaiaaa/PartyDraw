@@ -60,10 +60,19 @@ async function joinRoom(playerPage: Page, roomCode: string, playerId: string = '
 
 // Helper to mark player as ready
 async function markReady(playerPage: Page): Promise<void> {
-  const readyButton = playerPage.getByRole('button', { name: /Ready/i }).first();
+  const readyButton = playerPage.getByRole('button', { name: /I'm Ready!/i });
   await readyButton.click();
   // Wait for either "Waiting for players" or "Ready to Start" (on WaitingScreen)
   await playerPage.waitForSelector('text=/Waiting for players|Ready to Start/i', { timeout: 10000 });
+}
+
+// Helper for a player to vote for a theme pack (expands Theme Preferences first)
+async function playerVoteForPack(playerPage: Page, pack: string): Promise<void> {
+  const themeToggle = playerPage.getByText(/Theme Preferences/i).first();
+  await themeToggle.click();
+  await playerPage.waitForSelector('text=/Vote for Themes/i', { timeout: 5000 });
+  const packButton = playerPage.getByRole('button', { name: new RegExp(pack, 'i') }).first();
+  await packButton.click();
 }
 
 // Helper to simulate drawing on canvas
@@ -167,21 +176,11 @@ test.describe('Themed Gameplay', () => {
   });
 
   test('game can start with themed settings', async () => {
-    // Configure themes on host - expand theme selector first
-    const themeSelectorToggle = hostPage.getByText(/Question Themes/i).first();
-    await themeSelectorToggle.click();
-
-    // Select Halloween pack (use locator with filter to find the label containing Halloween)
-    const halloweenLabel = hostPage.locator('label').filter({ hasText: /Halloween/ }).first();
-    await halloweenLabel.click();
-
-    // Collapse theme selector
-    const collapseButton = hostPage.getByRole('button', { name: /Collapse/i }).first();
-    await collapseButton.click();
-
-    // Players join and mark ready
+    // Players join, player 1 votes for Halloween pack
     await joinRoom(player1Page, roomCode, 'player1');
     await joinRoom(player2Page, roomCode, 'player2');
+
+    await playerVoteForPack(player1Page, 'Halloween');
 
     await markReady(player1Page);
     await markReady(player2Page);
@@ -203,21 +202,11 @@ test.describe('Themed Gameplay', () => {
   });
 
   test('theme badges display during drawing phase', async () => {
-    // Configure themes on host - expand theme selector first
-    const themeSelectorToggle = hostPage.getByText(/Question Themes/i).first();
-    await themeSelectorToggle.click();
-
-    // Select Halloween pack
-    const halloweenLabel = hostPage.locator('label').filter({ hasText: /Halloween/ }).first();
-    await halloweenLabel.click();
-
-    // Collapse theme selector
-    const collapseButton = hostPage.getByRole('button', { name: /Collapse/i }).first();
-    await collapseButton.click();
-
-    // Players join and mark ready
+    // Players join, player 1 votes for Halloween
     await joinRoom(player1Page, roomCode, 'player1');
     await joinRoom(player2Page, roomCode, 'player2');
+
+    await playerVoteForPack(player1Page, 'Halloween');
 
     await markReady(player1Page);
     await markReady(player2Page);
@@ -242,22 +231,11 @@ test.describe('Themed Gameplay', () => {
   });
 
   test('complete game flow with themed questions', async () => {
-    // Set up themes - expand theme selector first
-    const themeSelectorToggle = hostPage.getByText(/Question Themes/i).first();
-    await themeSelectorToggle.click();
-
-    const christmasLabel = hostPage.locator('label').filter({ hasText: /Christmas/ }).first();
-    await christmasLabel.click();
-
-    const fantasyLabel = hostPage.locator('label').filter({ hasText: /Fantasy/ }).first();
-    await fantasyLabel.click();
-
-    const collapseButton = hostPage.getByRole('button', { name: /Collapse/i }).first();
-    await collapseButton.click();
-
-    // Players join and ready up
+    // Players join, player 1 votes for Christmas pack
     await joinRoom(player1Page, roomCode, 'player1');
     await joinRoom(player2Page, roomCode, 'player2');
+
+    await playerVoteForPack(player1Page, 'Christmas');
 
     await markReady(player1Page);
     await markReady(player2Page);
@@ -292,24 +270,12 @@ test.describe('Themed Gameplay', () => {
   });
 
   test('game with multiple theme packs shows variety', async () => {
-    // Select multiple packs for variety - expand theme selector first
-    const themeSelectorToggle = hostPage.getByText(/Question Themes/i).first();
-    await themeSelectorToggle.click();
-
-    const halloweenLabel = hostPage.locator('label').filter({ hasText: /Halloween/ }).first();
-    const christmasLabel = hostPage.locator('label').filter({ hasText: /Christmas/ }).first();
-    const kidsBirthdayLabel = hostPage.locator('label').filter({ hasText: /Kids Birthday/ }).first();
-
-    await halloweenLabel.click();
-    await christmasLabel.click();
-    await kidsBirthdayLabel.click();
-
-    const collapseButton = hostPage.getByRole('button', { name: /Collapse/i }).first();
-    await collapseButton.click();
-
-    // Players join and ready
+    // Players join; player 1 votes Halloween, player 2 votes Christmas
     await joinRoom(player1Page, roomCode, 'player1');
     await joinRoom(player2Page, roomCode, 'player2');
+
+    await playerVoteForPack(player1Page, 'Halloween');
+    await playerVoteForPack(player2Page, 'Christmas');
 
     await markReady(player1Page);
     await markReady(player2Page);
@@ -334,32 +300,24 @@ test.describe('Themed Gameplay', () => {
   });
 
   test('question count reflects selected themes', async () => {
-    // Expand theme selector
-    const themeSelectorToggle = hostPage.getByText(/Question Themes/i).first();
-    await themeSelectorToggle.click();
-
-    // Get initial count with default settings (badge shows "X questions")
-    const questionCountText = hostPage.getByText(/\d+ questions?/).first();
+    // Get initial count from host display (defaults shown until players vote)
+    const questionCountText = hostPage.locator('[data-testid="question-count"]').first();
     await expect(questionCountText).toBeVisible({ timeout: 5000 });
 
-    // Get initial count
     const initialText = await questionCountText.textContent();
     const initialCount = parseInt(initialText?.match(/\d+/)?.[0] || '0');
 
-    // Select Halloween pack (this will change the count)
-    const halloweenLabel = hostPage.locator('label').filter({ hasText: /Halloween/ }).first();
-    await halloweenLabel.click();
+    // Player joins and votes for Halloween — this should change the question count
+    await joinRoom(player1Page, roomCode, 'player1');
+    await playerVoteForPack(player1Page, 'Halloween');
 
-    // Wait for count update
-    await hostPage.waitForTimeout(500);
+    // Wait for vote to propagate to host
+    await hostPage.waitForTimeout(1000);
 
-    // Get updated count
     const updatedText = await questionCountText.textContent();
     const updatedCount = parseInt(updatedText?.match(/\d+/)?.[0] || '0');
 
-    // Count should have changed after selecting Halloween
     expect(updatedCount).toBeGreaterThan(0);
-    // The count should be different after changing themes
     expect(updatedCount).not.toBe(initialCount);
   });
 });

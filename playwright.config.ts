@@ -39,19 +39,15 @@ export default defineConfig({
     video: 'on-first-retry',
   },
 
-  // Use desktop Chrome for host and mobile Chrome for players
+  // Single project: tests create their own host/player contexts with explicit viewports,
+  // so running every test twice (once per project) was pure duplication and caused
+  // Chromium worker crashes from memory exhaustion partway through the second pass.
   projects: [
     {
-      name: 'host',
+      name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
-      },
-    },
-    {
-      name: 'player',
-      use: {
-        ...devices['Pixel 5'],
       },
     },
   ],

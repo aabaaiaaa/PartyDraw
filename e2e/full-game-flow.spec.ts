@@ -217,11 +217,11 @@ test.describe('Full Game Flow E2E', () => {
 
     // Player 1 marks ready
     await player1Page.getByRole('button', { name: /I'm Ready!/i }).click();
-    await player1Page.waitForSelector('text=/Waiting for host/i', { timeout: 5000 });
+    await player1Page.waitForSelector('text=/Waiting for|Ready to Start/i', { timeout: 5000 });
 
     // Player 2 marks ready
     await player2Page.getByRole('button', { name: /I'm Ready!/i }).click();
-    await player2Page.waitForSelector('text=/Waiting for host/i', { timeout: 5000 });
+    await player2Page.waitForSelector('text=/Waiting for|Ready to Start/i', { timeout: 5000 });
 
     // Wait for host to show "All ready!"
     await expect(hostPage.locator('text=/All ready!/i')).toBeVisible({ timeout: 10000 });
@@ -327,11 +327,8 @@ test.describe('Full Game Flow E2E', () => {
     // Wait for final phase
     await waitForGameStatus(hostPage, 'final', 30000);
 
-    // Verify host shows final leaderboard
-    await expect(hostPage.locator('text=/Final Results!/i')).toBeVisible({ timeout: 10000 });
-
-    // Verify winner is announced
-    await expect(hostPage.locator('text=/wins!/i')).toBeVisible({ timeout: 10000 });
+    // Verify winner title is shown (e.g. "🎉 Foo Wins! 🎉")
+    await expect(hostPage.locator('text=/Wins!/i')).toBeVisible({ timeout: 10000 });
 
     // Verify podium medals are shown
     await expect(hostPage.locator('text=🥇')).toBeVisible({ timeout: 5000 });
