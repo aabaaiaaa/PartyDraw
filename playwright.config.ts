@@ -57,7 +57,7 @@ export default defineConfig({
     {
       // Server process - use shorter reconnection timeout for faster tests
       command: 'npm run dev --workspace=server',
-      port: 3001,
+      port: 3200,
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
       env: {

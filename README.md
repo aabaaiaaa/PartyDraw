@@ -67,7 +67,7 @@ npm run dev:server
 npm run dev:client
 ```
 
-- Server runs on http://localhost:3001
+- Server runs on http://localhost:3200
 - Client runs on http://localhost:5175
 
 ### Accessing the Game

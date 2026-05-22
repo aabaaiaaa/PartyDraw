@@ -3,7 +3,7 @@ import { Server } from 'socket.io';
 import { createApp, CORS_OPTIONS } from './app';
 import { initializeSocketHandlers } from './socket';
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3200;
 
 // Create Express app
 const app = createApp();

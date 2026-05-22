@@ -29,7 +29,7 @@ export function createApp(): Application {
       version: '1.0.0',
       endpoints: {
         health: '/health',
-        socket: 'ws://localhost:3001',
+        socket: 'ws://localhost:3200',
       },
     });
   });

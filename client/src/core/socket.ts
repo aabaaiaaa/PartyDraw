@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
-// Server URL - default to localhost:3001 for development
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+// Server URL - default to localhost:3200 for development
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3200';
 
 // Connection state types
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
